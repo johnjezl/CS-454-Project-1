@@ -2,106 +2,53 @@ from Alphabet import alphabet
 from Delta import Delta, failed_state
 
 
-#def countValidStringsUsingRecurrenceFormula(dfa, max_length):
 
-
- #   states = dfa.states
-  #  prev = states
-   # for i in range(max_length-5):
-     #   next = []
-    #    for state in prev:
-      #      for c in alphabet:
-       #         new_state = dfa.get_delta(state, c)
-        #        if new_state != -1:
-         #           next.append(new_state)
-#        prev = next
- #   return len(prev)
-
-
-def N(dfa, n, j):
-    if n == 0:
-        if j in dfa.get_accept_states():
-            return 1
-        return 0
-    sum = 0
-    for x in alphabet:
-        new_state = Delta.delta(j, x)
-        if new_state != -1:
-            sum += N(dfa, n-1, new_state)
-    return sum
-
-def N_recursive(dfa, n, j):
-    # Create a memoization cache
-    cache = {}
+def countValidStrings(dfa, n):
+    states = list(dfa.states)
+    num_states = len(states)
     
-    def N_helper(n, j):
-        # Check cache first
-        if (n, j) in cache:
-            return cache[(n, j)]
-        
-        # Base case
-        if n == 0:
-            # Check if current state is accepting
-            if j in dfa.accept_states:
-                result = 1
-            else:
-                result = 0
+    state_to_index = {}
+    for idx in range(len(states)):
+        state = states[idx]
+        state_to_index[state] = idx    
+    
+    prev = [0] * num_states
+    for idx in range(len(states)):
+        state = states[idx]
+        if state in dfa.accept_states:
+            prev[idx] = 1
         else:
-            # Recursive case
-            result = 0
-            for x in alphabet:
-                new_state = Delta.delta(j, x)
-                if new_state != failed_state:  # Only continue if not in failed state
-                    result += N_helper(n-1, new_state)
+            prev[idx] = 0
+    
+    for k in range(1, n + 1):
+        next = [0] * num_states
         
-        cache[(n, j)] = result
-        return result
+        for j in range(len(states)):
+            from_state = states[j]
+
+            # Failed state always fails
+            if from_state == failed_state:
+                next[j] = 0
+                continue
+            
+            sum_value = 0
+            for x in alphabet:
+                # Get next state using delta transition
+                next_state = Delta.delta(from_state, x)
+                
+                # Add contribution if transition is valid
+                if next_state != failed_state and next_state in state_to_index:
+                    next_state_idx = state_to_index[next_state]
+                    sum_value += prev[next_state_idx]
+            
+            next[j] = sum_value
+        
+        prev = next.copy()
     
-    return N_helper(n, j)
+    # Return N_0(n) - count for the starting state (state 0)
+    start_state = dfa.start_state  # Should be 0 according to PDF
+    if start_state in state_to_index:
+        return prev[state_to_index[start_state]]
+    else:
+        return 0
 
-#def count_strings(dfa, n):
- #   states = list(dfa.get_states())
-  #  m = len(states)
-   # 
-#    # Initialize: N_j(0)
- #   # prev = [1 if j in dfa.get_accept_states() else 0 for j in range(m)]
-#    prev = []
-##    for j in range(m):
- #       if j in dfa.get_accept_states():
- #           prev.append(1)
- ##       else:
-  #          prev.append(0)
-
-#    # Iterate for lengths 1 to n
-##    for length in range(1, n+1):
- #       next = [0] * m
- #       for state_idx in range(m):
- #           for symbol in alphabet:
- #               state = states[state_idx]
- #               print(f"Current state: {state}, symbol: '{symbol}'")
- #               next_state = Delta.delta(state, symbol)
- ##               prev_idx = states.index(next_state)
-  ##              next[state_idx] += prev[prev_idx]
-   #     prev = next
-    
-   # return prev[0]
-
-
-#def countValidStrings(dfa, max_length):
- #   count, scount = countValidStringsHelper(dfa, max_length, "")
-  #  return count
-
-#def countValidStringsHelper(dfa, max_length, input_string):
-    #if max_length == 0:
-   #     if dfa.process_input(input_string):
-   #         return 1, 1
-   #     else:
-  #          return 0, 1
- #   count = 0
- #   scount = 0
- #   for c in alphabet:
- #       new_input_string = input_string + ''.join(c)
- #       c, sc = countValidStringsHelper(dfa, max_length-1, new_input_string)
-#        count += c
-#        scount += sc
-#    return count, scount
