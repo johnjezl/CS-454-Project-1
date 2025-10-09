@@ -7,10 +7,13 @@ class DFAForInputPairs:
         self.target_split_state = target_split_state
         self.states = self.generate_states(base_dfa, base_dfa.get_states())
         self.accept_states = set()
-        for s1 in base_dfa.get_states():
-            for s2 in base_dfa.get_states():
-                if s2 == target_split_state and s1 in base_dfa.get_accept_states():
-                    self.accept_states.add((s1, s2))
+        # Valid accepting states are states where the
+        # second element of the couplet match the target state
+        # and both are accepting states of the base DFA
+        for s1 in base_dfa.get_accept_states():
+                for s2 in base_dfa.get_accept_states():
+                    if s2 == target_split_state:
+                        self.accept_states.add((s1, s2))
         self.alphabet = self.gen_alphabet()
         
     def get_alphabet(self):

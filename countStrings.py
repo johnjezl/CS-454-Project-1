@@ -65,7 +65,13 @@ def countAASplitStrings(dfa, n):
         if p == failed_state:
             continue
 
-        # Get state after we see 'aa'
+        # We only care about states of the lesser of 
+        # length n/2 - 1 and length of the longest state (5)
+        slen = state_length(p)
+        if  slen != min(5, n // 2 - 1):
+            continue
+
+        # Get the state we would be at after we see 'aa' from this state
         q = dfa.transition_table.get_next_state(p, 'a')
         if q == failed_state:
             continue
@@ -73,13 +79,11 @@ def countAASplitStrings(dfa, n):
         if q == failed_state:
             continue
 
-        # Build DFA for Input Pairs
+        # Build DFA for Input Pairs based on this state
         dfaForPairs = DFAForInputPairs(dfa, (0, q), p)
         
         count = countPairStrings(dfaForPairs, n//2 - 1)
         total_count += count
-        print(f"Count for split state {p} is {count}")
-        print(f"Intermediate total count is {total_count}")
     
     return total_count
 
@@ -92,8 +96,8 @@ def countPairStrings(dfaForPairs, n):
     for idx in range(len(states)):
         state = states[idx]
         state_to_index[state] = idx    
-    
-    prev = [0] * num_states
+
+    prev = [0] * num_states 
     for idx in range(len(states)):
         state = states[idx]
         if state in dfaForPairs.get_accept_states():
@@ -129,3 +133,13 @@ def generate_state_pairs(dfa, states):
         for s2 in states:
             state_pairs.add((s1, s2))
     return list(state_pairs)
+
+
+def state_length(state):
+    if state == failed_state:
+        return -1
+    length = 0
+    while state > 0:
+        length += 1
+        state = state >> 4
+    return length

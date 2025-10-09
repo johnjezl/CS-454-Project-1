@@ -36,7 +36,10 @@ print(f"Number of valid strings of length {n}: {count}")
 print(f"Time taken by countValidStrings (dynamic programming): {time2 - time1:.6f} seconds")
 
 
+print(f"\nCalculating number of valid strings of length {n} that contain 'aa' in the first half:")
+time1 = time.perf_counter()
 n = 4
 count = countAASplitStrings(dfa, n)
 print(f"Number of valid strings of length {n} that contain 'aa' in the first half: {count}")
-
+time2 = time.perf_counter()
+print(f"Time taken by countAASplitStrings: {time2 - time1:.6f} seconds")
