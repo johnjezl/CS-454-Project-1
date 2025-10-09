@@ -1,8 +1,10 @@
 from Alphabet import alphabet
+from TransitionTable import TransitionTable
+from buildStates import *
 
-failed_state = -1
 
 class Delta:
+    transition_table = None
 
     @staticmethod
     def delta(state, input):
@@ -10,15 +12,33 @@ class Delta:
             return failed_state
         if input not in alphabet:
             raise ValueError(f"Input '{input}' not in alphabet")
+        input_value = alphabet.index(input) + 1
         if state < 0x10000:
-            new_state = (state << 4) + (alphabet.index(input) + 1)
+            new_state = (state << 4) + input_value
             return new_state
         else:
             if Delta._is_valid_transition(state, input):
-                state = ((state & 0xFFFF) << 4) + (alphabet.index(input) + 1)
+                state = ((state & 0xFFFF) << 4) + input_value
                 return state
             else:
                 return failed_state
+
+    @staticmethod
+    def build_transition_table():
+        from Delta import Delta
+        table = TransitionTable()
+        
+        # Generate all states
+        states, accepting_states = buildStates()
+        
+        # Build transition table
+        for state in states:
+            for symbol in alphabet:
+                next_state = Delta.delta(state, symbol)
+                table.add_transition(state, symbol, next_state)
+        
+        return table
+
 
     @staticmethod
     def _is_valid_transition(state, input):
