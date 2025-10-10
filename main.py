@@ -2,6 +2,32 @@ from buildDFA import buildDFA
 # from countStrings import countValidStrings, countValidStringsUsingRecurrenceFormula, N, count_strings
 from countStrings import *
 import time
+"""
+dfa = buildDFA()
+
+choice = "0"
+while (choice != "3"):
+    print("Choices:")
+    print("(1) Count number of strings of length n in L")
+    print("(2) Count number of strings of length n in L'")
+    print("(3) Quit")
+    choice = input("Choice: ")  #choice should be between 1-300
+
+    if (choice == "1"):
+        n = int(input(f"Value for n: "))
+        print(f"Number of valid strings in L for {n}:  {countValidStrings(dfa, n)}\n")
+
+    elif (choice == "2"):
+        n = int(input(f"Value for n: "))
+        print(f"Number of valid strings in L' for {n}:  {countAASplitStrings(dfa, n)}\n")
+
+    elif (choice == "3"):
+        print("Quitting...")
+
+    else:
+        print("Invalid choice.\n")
+"""
+
 
 def test(input_string):
     result = dfa.process_input(input_string)
