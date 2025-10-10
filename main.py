@@ -26,19 +26,18 @@ test("badacdd")
 test("abdbcdc")
 
 
-n = 100
-#for n in range(100, 301, 100):
-print(f"\nCalculating number of valid strings of length {n}:")
-time1 = time.perf_counter()
-count = countValidStrings(dfa, n)
-time2 = time.perf_counter()
-print(f"Number of valid strings of length {n}: {count}")
-print(f"Time taken by countValidStrings (dynamic programming): {time2 - time1:.6f} seconds")
+for n in (1, 5, 6, 7, 10, 100):
+    print(f"\nCalculating number of valid strings of length {n}:")
+    time1 = time.perf_counter()
+    count = countValidStrings(dfa, n)
+    time2 = time.perf_counter()
+    print(f"Number of valid strings of length {n}: {count}")
+    print(f"Time taken by countValidStrings (dynamic programming): {time2 - time1:.6f} seconds")
 
 
-print(f"\nCalculating number of valid strings of length {n} that contain 'aa' in the first half:")
 time1 = time.perf_counter()
 n = 4
+print(f"\nCalculating number of valid strings of length {n} that contain 'aa' in the first half:")
 count = countAASplitStrings(dfa, n)
 print(f"Number of valid strings of length {n} that contain 'aa' in the first half: {count}")
 time2 = time.perf_counter()

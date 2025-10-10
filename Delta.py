@@ -1,5 +1,4 @@
 from Alphabet import alphabet
-from TransitionTable import TransitionTable
 from buildStates import *
 
 
@@ -22,23 +21,6 @@ class Delta:
                 return state
             else:
                 return failed_state
-
-    @staticmethod
-    def build_transition_table():
-        from Delta import Delta
-        table = TransitionTable()
-        
-        # Generate all states
-        states, accepting_states = buildStates()
-        
-        # Build transition table
-        for state in states:
-            for symbol in alphabet:
-                next_state = Delta.delta(state, symbol)
-                table.add_transition(state, symbol, next_state)
-        
-        return table
-
 
     @staticmethod
     def _is_valid_transition(state, input):

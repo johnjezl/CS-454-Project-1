@@ -2,11 +2,12 @@ from Alphabet import alphabet
 from Delta import Delta
 from buildStates import failed_state
 from DFAForInputPairs import DFAForInputPairs
+from PerfTimer import *
 
 
 
 def countValidStrings(dfa, n):
-    states = list(dfa.states)
+    states = list(dfa.get_states())
     num_states = len(states)
     
     state_to_index = {}
@@ -17,12 +18,12 @@ def countValidStrings(dfa, n):
     prev = [0] * num_states
     for idx in range(len(states)):
         state = states[idx]
-        if state in dfa.accept_states:
+        if state in dfa.get_accept_states():
             prev[idx] = 1
         else:
             prev[idx] = 0
     
-    for k in range(1, n + 1):
+    for _ in range(1, n + 1):
         next = [0] * num_states
         
         for j in range(len(states)):
@@ -72,24 +73,28 @@ def countAASplitStrings(dfa, n):
             continue
 
         # Get the state we would be at after we see 'aa' from this state
-        q = dfa.transition_table.get_next_state(p, 'a')
+        q = dfa.transition(p, 'a')
         if q == failed_state:
             continue
-        q = dfa.transition_table.get_next_state(q, 'a')
+        q = dfa.transition(q, 'a')
         if q == failed_state:
             continue
 
         # Build DFA for Input Pairs based on this state
+        PerfTimer.cont("Create DFAForInputPairs")
         dfaForPairs = DFAForInputPairs(dfa, (0, q), p)
+        PerfTimer.end("Create DFAForInputPairs")
         
         count = countPairStrings(dfaForPairs, n//2 - 1)
         total_count += count
-    
+
+    PerfTimer.print_timers()
+
     return total_count
 
 
 def countPairStrings(dfaForPairs, n):
-    states = sorted(list(dfaForPairs.get_states()))
+    states = list(dfaForPairs.get_states())
     num_states = len(states)
 
     state_to_index = {}
@@ -97,6 +102,7 @@ def countPairStrings(dfaForPairs, n):
         state = states[idx]
         state_to_index[state] = idx    
 
+    PerfTimer.cont("build prev")
     prev = [0] * num_states 
     for idx in range(len(states)):
         state = states[idx]
@@ -104,22 +110,31 @@ def countPairStrings(dfaForPairs, n):
             prev[idx] = 1
         else:
             prev[idx] = 0
-    
+    PerfTimer.end("build prev")
+
     for k in range(1, n + 1):
         next = [0] * num_states
         
-        for j in range(len(states)):
-            from_state = states[j]
+        for j, from_state in enumerate(states):
+
+            # Failed state always fails
+            if from_state[0] == failed_state or from_state[1] == failed_state:
+                next[j] = 0
+                continue
 
             sum_value = 0
-            for alpha_pair in dfaForPairs.get_alphabet():
+            for input in dfaForPairs.get_alphabet():
                 # Get next state using delta transition
-                next_state = dfaForPairs.process_input_pair(from_state, alpha_pair)
+                PerfTimer.cont("process_input_pair")
+                next_state = dfaForPairs.get_transition(from_state, input)
+                PerfTimer.end("process_input_pair")
                 
                 # Add if transition is valid
-                if next_state[0] != failed_state and next_state[1] != failed_state and next_state in state_to_index:
-                    next_state_idx = state_to_index[next_state]
-                    sum_value += prev[next_state_idx]
+                if next_state != None:
+                    if next_state[0] != failed_state and next_state[1] != failed_state:
+                        if next_state in state_to_index:
+                            next_state_idx = state_to_index[next_state]
+                            sum_value += prev[next_state_idx]
             next[j] = sum_value
 
         prev = next.copy()       
