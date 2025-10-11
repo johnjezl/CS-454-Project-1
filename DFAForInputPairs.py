@@ -1,10 +1,12 @@
 from Delta import *
 from PerfTimer import *
+import numpy as np
 
 class DFAForInputPairs:
     transition_table = None
 
     def __init__(self, base_dfa, start_state, first_dest):
+        self.base_states_to_index = {}
         self.base_dfa = base_dfa
         self.start_state = start_state
         self.target_split_state = first_dest
@@ -20,8 +22,11 @@ class DFAForInputPairs:
         self.alphabet = self.gen_alphabet()
         if self.transition_table == None:
             PerfTimer.cont("build_transition_table")
-            self.transition_table = self.build_transition_table()
+            self.build_transition_table()
             PerfTimer.end("build_transition_table")
+            PerfTimer.cont("build_transition_table_test")
+            self.build_transition_table_test()
+            PerfTimer.end("build_transition_table_test")
 
     def get_alphabet(self):
         return self.alphabet       
@@ -32,10 +37,29 @@ class DFAForInputPairs:
     def get_accept_states(self):
         return self.accept_states
     
-    def get_transition(self, state, input_pair):
-        if (state, input_pair) in self.transition_table:
-            return self.transition_table[(state, input_pair)]
-        return (failed_state, failed_state)
+    def get_transition_table(self):
+        return self.transition_table
+    
+    def get_xlat_table(self):
+        return self.xlat_table
+    
+    def get_transition(self, state, input):
+        PerfTimer.cont("state-to-index conversions")
+        s1 = self.base_states.index(state[0])
+        PerfTimer.end("state-to-index conversions")
+        PerfTimer.cont("state-to-index conversions")
+        s2 = self.base_states.index(state[1])
+        PerfTimer.end("state-to-index conversions")
+        PerfTimer.cont("state-to-index conversions")
+        PerfTimer.end("state-to-index conversions")
+        PerfTimer.cont("alpha-to-index conversions")
+        i1 = int(self.base_alphabet.index(input[0]))
+        i2 = int(self.base_alphabet.index(input[1]))
+        PerfTimer.end("alpha-to-index conversions")
+        return self.xlat_table[s1][s2][i1][i2]
+
+    def get_transition_old(self, state, input):
+        next_state = self.transition_table.get((state, input))
 
     def generate_states(self, states):
         state_pairs = []
@@ -57,20 +81,53 @@ class DFAForInputPairs:
         return self.get_transition(state, input_symbol)
 
     def build_transition_table(self):
-        transition_table = {}
-        for state1 in self.base_dfa.get_states():
-            for input1 in self.base_dfa.get_alphabet():
-                new_state1 = self.base_dfa.transition(state1, input1)
-                if new_state1 != failed_state:
-                    for state2 in self.base_dfa.get_states():
-                        for input2 in self.base_dfa.get_alphabet():
-                            new_state2 = self.base_dfa.transition(state2, input2)
-                            if new_state2 != failed_state:
-                                transition_table[((state1, state2), (input1, input2))] = (new_state1, new_state2)
-        return transition_table
+        self.base_states = self.base_dfa.get_states()
+        self.base_alphabet = self.base_dfa.get_alphabet()
+        self.base_transition_table = self.base_dfa.get_transition_table()
+        self.base_transitions = {}
+        self.transition_table = {}
+        c = 0
+        for state in self.base_states:
+            if state != failed_state:
+                for sym in self.base_alphabet:
+                    next_state = self.base_transition_table[(state,sym)]
+                    if next_state != failed_state:
+                        c += 1
+                        self.base_transitions[(state, sym)] = next_state
+        for state_input1, new_state1 in self.base_transitions.items():
+            for state_input2, new_state2 in self.base_transitions.items():
+                self.transition_table[((state_input1[0],state_input2[0]),(state_input1[1],state_input2[1]))] = (new_state1,new_state2)
+
+    def build_transition_table_test(self):
+        self.base_states = self.base_dfa.get_states()
+        self.base_alphabet = self.base_dfa.get_alphabet()
+        self.base_transition_table = self.base_dfa.get_transition_table()
+        self.base_transitions_test = {}
+        num_base_states = len(self.base_states)
+        num_base_alpha = len(self.base_alphabet)
+        self.xlat_table = np.empty((num_base_states, num_base_states, num_base_alpha, num_base_alpha), dtype=object)
+        c = 0
+        for idx, state in enumerate(self.base_states):
+            c = c + 1
+            self.base_states_to_index[state] = idx
+        c = 0
+        for idx, state in enumerate(self.base_states_to_index):
+            if state != failed_state:
+                for sym in self.base_alphabet:
+                    next_state = self.base_transition_table[(state,sym)]
+                    if next_state != failed_state:
+                        self.base_transitions_test[(idx, sym)] = next_state
+        for stateidx_input1, new_state1 in self.base_transitions_test.items():
+            for stateidx_input2, new_state2 in self.base_transitions_test.items():
+                s1 = stateidx_input1[0]
+                s2 = stateidx_input2[0]
+                i1 = int(self.base_alphabet.index(stateidx_input1[1]))
+                i2 = int(self.base_alphabet.index(stateidx_input2[1]))
+                self.xlat_table[s1][s2][i1][i2] = (new_state1, new_state2)
+                c = c + 1
 
     def pretty_print_alpha(self, alpha):
         return f"({alpha[0]},{alpha[1]})"
 
     def pretty_print_state(self, state):
-        return f"({self.base_dfa.pretty_print_state(state[0])},{self.base_dfa.pretty_print_state(state[1])})"
+        return f"({self.base_dfa.pretty_print_state(state[0])} : {self.base_dfa.pretty_print_state(state[1])})"

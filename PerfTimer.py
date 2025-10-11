@@ -34,3 +34,4 @@ class PerfTimer:
     def print_timers():
         for i, name in enumerate(PerfTimer.times):
             print(f"{name}: {PerfTimer.times[name]}")
+            

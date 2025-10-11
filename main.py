@@ -58,7 +58,6 @@ for n in (1, 5, 6, 7, 10, 100):
     count = countValidStrings(dfa, n)
     time2 = time.perf_counter()
     print(f"Number of valid strings of length {n}: {count}")
-    print(f"Time taken by countValidStrings (dynamic programming): {time2 - time1:.6f} seconds")
 
 
 time1 = time.perf_counter()

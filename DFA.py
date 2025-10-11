@@ -3,23 +3,26 @@ from buildStates import *
 
 class DFA:
     def __init__(self, states, alphabet, delta, start_state, accept_states):
-        self.states = states
-        self.alphabet = alphabet
+        self.states = states.copy()
+        self.alphabet = alphabet.copy()
         self.transition_table = self.build_transition_table()
         self.start_state = start_state
-        self.accept_states = accept_states
+        self.accept_states = accept_states.copy()
 
     def get_states(self):
-        return self.states
+        return self.states.copy()
 
     def get_accept_states(self):
-        return self.accept_states
+        return self.accept_states.copy()
 
     def get_delta(self):
         return self.delta
     
     def get_alphabet(self):
-        return self.alphabet
+        return self.alphabet.copy()
+    
+    def get_transition_table(self):
+        return self.transition_table.copy()
 
     def transition(self, state, input_symbol):
         if (state, input_symbol) in self.transition_table:
@@ -51,10 +54,13 @@ class DFA:
 
     def pretty_print_state(self, state):
         state_string = ""
+        if state == -1:
+            return "failed_state"
         if state == 0:
             return "start"
         while (state > 0):
-            state_string = state_string + alphabet[(state & 0xf) - 1]
+            letter_idx = (state & 0xf) - 1
+            state_string = state_string + self.alphabet[letter_idx]
             state = state >> 4
         return state_string
 

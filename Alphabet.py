@@ -1,3 +1,3 @@
 
-alphabet = ['a', 'b', 'c', 'd']
+alphabet = list(['a', 'b', 'c', 'd'])
 
