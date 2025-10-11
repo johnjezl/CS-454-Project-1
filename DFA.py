@@ -24,11 +24,41 @@ class DFA:
     def get_transition_table(self):
         return self.transition_table.copy()
 
+
+
+    """
+    Input:  
+        self - the DFA itself
+        state - the current state to transition from
+        input_symbol - the input symbol to transition on
+    Output: 
+        the state the DFA goes to on delta(state, input_symbol) or failed_state if there was no state to go to
+    Example:
+        Input - self.transition(0, a)
+        Output - 1
+    Preconditions: 
+        failed_state is defined
+    """
     def transition(self, state, input_symbol):
         if (state, input_symbol) in self.transition_table:
             return self.transition_table[(state, input_symbol)]
         return failed_state
 
+
+
+
+    """
+    Input:  
+        self - the DFA itself
+        input_string - a string made from the alphabet
+    Output: 
+        true if the current_state is an accepting state, false if it is not
+    Example:
+        Input - self.process_input(abc)
+        Output - true
+    Preconditions:
+        None
+    """
     def process_input(self, input_string):
         current_state = self.start_state
         for symbol in input_string:
@@ -36,7 +66,21 @@ class DFA:
                 raise ValueError(f"Symbol '{symbol}' not in alphabet")
             current_state = self.transition(current_state, symbol)
         return current_state in self.accept_states
-    
+
+
+
+
+    """
+    Input:  
+        self - the DFA itself
+    Output: 
+        table - a transition table for the DFA in form of a dictionary
+    Example:
+        Input - self.build_transition_table()
+        Output - a dictionary mapping delta(state, symbol) to the state it goes to for all states in the DFA
+    Preconditions:
+        Need the delta function from class Delta, need buildStates() to build all the states, alphabet is defined
+    """
     def build_transition_table(self):
         from Delta import Delta
         table = {}
@@ -52,6 +96,23 @@ class DFA:
         
         return table
 
+
+
+
+    """
+    Input:  
+        self - the DFA itself
+        state - the state to be converted to a string using the alphabet
+    Output: 
+        state_string - the state in the form of a string using the alphabet
+        or "failed_state" if state == -1
+        or "start" if state == 0
+    Example:
+        Input - self.pretty_print_state(1)
+        Output - a
+    Preconditions:
+        alphabet is defined
+    """
     def pretty_print_state(self, state):
         state_string = ""
         if state == -1:
