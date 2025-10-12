@@ -73,7 +73,7 @@ Input:
     dfa - the DFA that accepts strings having all letters of alphabet in each substring of length 6
     n - the length to count valid strings for
 Output: 
-    the number of strings of length n accepted by dfa that accepts even length strings with aa in the middle 
+    the number of strings of even length n accepted with aa in the middle 
     and having all letters of alphabet in each substring of length 6
 Example:
     input - countAASplitStrings(dfa, 2) with alphabet of 4
@@ -119,6 +119,21 @@ def countAASplitStrings(dfa, n):
     return total_count
 
 
+
+
+
+"""
+Input:  
+    dfaForPairs - the DFA that accepts pairs of strings having all letters of alphabet in each substring of length 6
+    n - the length of one half of the string without the a  (original string length / 2 - 1)
+Output: 
+    the number of strings of length n accepted by dfaForPairs
+Example:
+    input - countPairStrings(dfaForPairs, 1)    (original string length would be 4)
+    output - 4      (because alphabet has 4 letters)
+Preconditions:
+    n >= 0 and dfaForPairs must contain all states and accepting states and have a transition table
+"""
 def countPairStrings(dfaForPairs, n):
     states = list(dfaForPairs.get_states())
     num_states = len(states)
@@ -171,6 +186,20 @@ def countPairStrings(dfaForPairs, n):
     return prev[state_to_index[dfaForPairs.start_state]]
 
 
+
+
+"""
+Input:  
+    dfaForPairs - the DFA that accepts pairs of strings having all letters of alphabet in each substring of length 6
+    n - the length of one half of the string without the a  (original string length / 2 - 1)
+Output: 
+    the number of strings of length n accepted by dfaForPairs
+Example:
+    input - countAASplitStrings(dfa, 2) with alphabet of 4
+    output - 1
+Preconditions:
+    n >= 0 and dfaForPairs must contain all states and accepting states and have a transition table
+"""
 def countPairStrings_old(dfaForPairs, n):
     states = list(dfaForPairs.get_states())
     num_states = len(states)
