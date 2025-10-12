@@ -34,8 +34,8 @@ class DFA:
     Output: 
         the state the DFA goes to on delta(state, input_symbol) or failed_state if there was no state to go to
     Example:
-        Input - self.transition(0, a)
-        Output - 1
+        Input - self.transition(1, a)
+        Output - 9 (using base 8 encoding)
     Preconditions: 
         failed_state is defined
     """

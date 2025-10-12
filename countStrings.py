@@ -6,6 +6,18 @@ from PerfTimer import *
 
 
 
+"""
+Input:  
+    dfa - a DFA
+    n - the length to count valid strings for
+Output: 
+    the number of strings of length n accepted by dfa
+Example:
+    input - countValidStrings(dfa, 1) with alphabet of 4
+    output - 4
+Preconditions:
+    n >= 0 and dfa must be contain all states and accepting states and have a delta function
+"""
 def countValidStrings(dfa, n):
     states = list(dfa.get_states())
     num_states = len(states)
@@ -194,6 +206,20 @@ def countPairStrings_old(dfaForPairs, n):
 
     return prev[state_to_index[dfaForPairs.start_state]]
 
+
+
+
+"""
+Input:  
+    state - the state to check the length of (encoded in base 8)
+Output: 
+    length - the length of the state
+Example:
+    input - state_length(115785)    (where 115785 = cdbaaa in base 8)
+    output - 6
+Preconditions:
+    state must be a valid state or the failed state
+"""
 def state_length(state):
     if state == failed_state:
         return -1
