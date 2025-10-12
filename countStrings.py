@@ -8,7 +8,7 @@ from PerfTimer import *
 
 """
 Input:  
-    dfa - a DFA
+    dfa - the DFA that accepts strings having all letters of alphabet in each substring of length 6
     n - the length to count valid strings for
 Output: 
     the number of strings of length n accepted by dfa
@@ -68,6 +68,19 @@ def countValidStrings(dfa, n):
 
 
 
+"""
+Input:  
+    dfa - the DFA that accepts strings having all letters of alphabet in each substring of length 6
+    n - the length to count valid strings for
+Output: 
+    the number of strings of length n accepted by dfa that accepts even length strings with aa in the middle 
+    and having all letters of alphabet in each substring of length 6
+Example:
+    input - countAASplitStrings(dfa, 2) with alphabet of 4
+    output - 1
+Preconditions:
+    n >= 0 and dfa must contain all states and accepting states and have a delta function
+"""
 def countAASplitStrings(dfa, n):
     if n % 2 != 0:
         return 0  # Must be even length
