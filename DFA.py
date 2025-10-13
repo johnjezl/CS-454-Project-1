@@ -5,6 +5,7 @@ class DFA:
     def __init__(self, states, alphabet, delta, start_state, accept_states):
         self.states = states.copy()
         self.alphabet = alphabet.copy()
+        self.delta = delta  # Store the delta parameter
         self.transition_table = self.build_transition_table()
         self.start_state = start_state
         self.accept_states = accept_states.copy()
@@ -38,18 +39,17 @@ class DFA:
         return current_state in self.accept_states
     
     def build_transition_table(self):
-        from Delta import Delta
         table = {}
-        
+
         # Generate all states
         states, accepting_states = buildStates()
-        
-        # Build transition table
+
+        # Build transition table using the delta passed to __init__
         for state in states:
             for symbol in self.alphabet:
-                next_state = Delta.delta(state, symbol)
+                next_state = self.delta.delta(state, symbol)
                 table[(state, symbol)] = next_state
-        
+
         return table
 
     def pretty_print_state(self, state):
