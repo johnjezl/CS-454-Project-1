@@ -5,7 +5,7 @@ class DFA:
     def __init__(self, states, alphabet, delta, start_state, accept_states):
         self.states = states.copy()
         self.alphabet = alphabet.copy()
-        self.delta = delta  # Store the delta parameter
+        self.delta = delta
         self.transition_table = self.build_transition_table()
         self.start_state = start_state
         self.accept_states = accept_states.copy()

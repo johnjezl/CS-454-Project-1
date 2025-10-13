@@ -65,10 +65,6 @@ for n in (1, 5, 6, 7, 10, 100):
     print(f"Number of valid strings of length {n}: {count}")
 
 
-#print(f"\n(Matrix version) Calculating number of valid strings of length {n} that contain 'aa' in the first half:")
-#count = countAASplitStrings_matrix_power(dfa, n)
-#print(f"(Matrix version) Number of valid strings of length {n} that contain 'aa' in the first half: {count}")
-
 print(f"\nSplit string counting:")
 for n in (4, 6, 100, 300):
     time1 = time.perf_counter()
