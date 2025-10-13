@@ -4,6 +4,18 @@ from DFAForInputPairs import DFAForInputPairs
 import numpy as np
 
 
+"""
+Input:  
+    dfaForPairs - the DFA that accepts pairs of strings having all letters of alphabet in each substring of length 6
+    n - the length of one half of the string without the a  (original string length / 2 - 1)
+Output: 
+    the number of strings of length n accepted by dfaForPairs
+Example:
+    input - countPairStrings(dfaForPairs, 1)    (original string length would be 4)
+    output - 4      (because alphabet has 4 letters)
+Preconditions:
+    n >= 0 and dfaForPairs must contain all states and accepting states and have a transition table
+"""
 def countValidStrings(dfa, n):
     states = list(dfa.get_states())
     num_states = len(states)
@@ -53,7 +65,19 @@ def countValidStrings(dfa, n):
         return 0
 
 
-
+"""
+Input:  
+    dfa - the DFA that accepts strings having all letters of alphabet in each substring of length 6
+    n - the length to count valid strings for
+Output: 
+    the number of strings of even length n accepted with aa in the middle 
+    and having all letters of alphabet in each substring of length 6
+Example:
+    input - countAASplitStrings(dfa, 2) with alphabet of 4
+    output - 1
+Preconditions:
+    n >= 0 and dfa must contain all states and accepting states and have a delta function
+"""
 def countAASplitStrings(dfa, n):
     if n % 2 != 0:
         return 0  # Must be even length
@@ -89,6 +113,20 @@ def countAASplitStrings(dfa, n):
     return total_count
 
 
+
+
+"""
+Input:  
+    dfaForPairs - the DFA that accepts pairs of strings having all letters of alphabet in each substring of length 6
+    n - the length of one half of the string without the a  (original string length / 2 - 1)
+Output: 
+    the number of strings of length n accepted by dfaForPairs
+Example:
+    input - countPairStrings(dfaForPairs, 1)    (original string length would be 4)
+    output - 4      (because alphabet has 4 letters)
+Preconditions:
+    n >= 0 and dfaForPairs must contain all states and accepting states and have a transition table
+"""
 def countPairStrings(dfaForPairs, n, pairs_list):
     states = dfaForPairs.get_states()
     num_states = len(states)
@@ -157,6 +195,17 @@ def countPairStrings(dfaForPairs, n, pairs_list):
     return results
 
 
+"""
+Input:  
+    state - the state to check the length of (encoded in base 8)
+Output: 
+    length - the length of the state
+Example:
+    input - state_length(115785)    (where 115785 = cdbaaa in base 8)
+    output - 6
+Preconditions:
+    state must be a valid state or the failed state
+"""
 def state_length(state):
     if state == failed_state:
         return -1
