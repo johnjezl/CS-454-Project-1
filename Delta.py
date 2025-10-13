@@ -2,7 +2,6 @@ from Alphabet import alphabet
 from buildStates import *
 
 class Delta:
-    transition_table = None
 
     @staticmethod
     def delta(state, input):

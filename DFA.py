@@ -10,19 +10,19 @@ class DFA:
         self.accept_states = accept_states.copy()
 
     def get_states(self):
-        return self.states.copy()
+        return self.states
 
     def get_accept_states(self):
-        return self.accept_states.copy()
+        return self.accept_states
 
     def get_delta(self):
         return self.delta
     
     def get_alphabet(self):
-        return self.alphabet.copy()
+        return self.alphabet
     
     def get_transition_table(self):
-        return self.transition_table.copy()
+        return self.transition_table
 
     def transition(self, state, input_symbol):
         if (state, input_symbol) in self.transition_table:

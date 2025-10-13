@@ -60,10 +60,14 @@ for n in (1, 5, 6, 7, 10, 100):
     print(f"Number of valid strings of length {n}: {count}")
 
 
-time1 = time.perf_counter()
-n = 4
-print(f"\nCalculating number of valid strings of length {n} that contain 'aa' in the first half:")
-count = countAASplitStrings(dfa, n)
-print(f"Number of valid strings of length {n} that contain 'aa' in the first half: {count}")
-time2 = time.perf_counter()
-print(f"Time taken by countAASplitStrings: {time2 - time1:.6f} seconds")
+#print(f"\n(Matrix version) Calculating number of valid strings of length {n} that contain 'aa' in the first half:")
+#count = countAASplitStrings_matrix_power(dfa, n)
+#print(f"(Matrix version) Number of valid strings of length {n} that contain 'aa' in the first half: {count}")
+
+print(f"\nSplit string counting:")
+for n in (4, 6, 100, 300):
+    time1 = time.perf_counter()
+    count = countAASplitStrings(dfa, n)
+    print(f"\tNumber of valid strings of length {n} that contain 'aa' in the first half: {count}")
+    time2 = time.perf_counter()
+    print(f"\t\tDuration: {time2 - time1:.6f} seconds")

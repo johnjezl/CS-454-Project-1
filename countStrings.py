@@ -1,9 +1,7 @@
-from Alphabet import alphabet
 from Delta import Delta
 from buildStates import failed_state
 from DFAForInputPairs import DFAForInputPairs
-from PerfTimer import *
-
+import numpy as np
 
 
 def countValidStrings(dfa, n):
@@ -14,7 +12,7 @@ def countValidStrings(dfa, n):
     for idx in range(len(states)):
         state = states[idx]
         state_to_index[state] = idx    
-    
+
     prev = [0] * num_states
     for idx in range(len(states)):
         state = states[idx]
@@ -22,10 +20,10 @@ def countValidStrings(dfa, n):
             prev[idx] = 1
         else:
             prev[idx] = 0
-    
+
     for _ in range(1, n + 1):
         next = [0] * num_states
-        
+
         for j in range(len(states)):
             from_state = states[j]
 
@@ -33,20 +31,20 @@ def countValidStrings(dfa, n):
             if from_state == failed_state:
                 next[j] = 0
                 continue
-            
+
             sum_value = 0
-            for x in alphabet:
+            for x in dfa.get_alphabet():
                 # Get next state using delta transition
                 next_state = Delta.delta(from_state, x)
-                
+
                 # Add contribution if transition is valid
                 if next_state != failed_state and next_state in state_to_index:
                     next_state_idx = state_to_index[next_state]
                     sum_value += prev[next_state_idx]
-            
+
             next[j] = sum_value
-        
-        prev = next.copy()
+
+        prev = next
     
     start_state = dfa.start_state  # Should be 0 according to PDF
     if start_state in state_to_index:
@@ -60,14 +58,16 @@ def countAASplitStrings(dfa, n):
     if n % 2 != 0:
         return 0  # Must be even length
 
-    total_count = 0
-    total_count2 = 0
-    
+    # Build DFA for Input Pairs once - we'll reuse it
+    dfaForPairs = DFAForInputPairs(dfa, (0, 0), 0)
+
+    # Collect start_state and first_final_state pairs to compute simultaneously
+    pairs_to_compute = []
     for p in dfa.get_states():
         if p == failed_state:
             continue
 
-        # We only care about states of the lesser of 
+        # We only care about states of the lesser of
         # length n/2 - 1 and length of the longest state (5)
         slen = state_length(p)
         if  slen != min(5, n // 2 - 1):
@@ -81,118 +81,81 @@ def countAASplitStrings(dfa, n):
         if q == failed_state:
             continue
 
-        # Build DFA for Input Pairs based on this state
-        PerfTimer.cont("DFAForInputPairs")
-        dfaForPairs = DFAForInputPairs(dfa, (0, q), p)
-        PerfTimer.end("DFAForInputPairs")
+        pairs_to_compute.append(((0, q), p))
 
-        count = countPairStrings_old(dfaForPairs, n//2 - 1)
-        total_count += count
-
-    PerfTimer.print_timers()
+    counts = countPairStrings(dfaForPairs, n//2 - 1, pairs_to_compute)
+    total_count = sum(counts)
 
     return total_count
 
 
-def countPairStrings(dfaForPairs, n):
-    states = list(dfaForPairs.get_states())
+def countPairStrings(dfaForPairs, n, pairs_list):
+    states = dfaForPairs.get_states()
     num_states = len(states)
-    # Avoid having to make a function call to do transition lookups
-    transition_table = dfaForPairs.get_transition_table()
+    num_pairs = len(pairs_list)
 
-    state_to_index = {}
-    for idx in range(len(states)):
-        state = states[idx]
-        state_to_index[state] = idx    
+    # Build state index map if not cached
+    if not hasattr(dfaForPairs, '_state_to_index_cache'):
+        state_to_index = {}
+        for idx, state in enumerate(states):
+            state_to_index[state] = idx
+        dfaForPairs._state_to_index_cache = state_to_index
 
-    PerfTimer.cont("build prev")
-    prev = [0] * num_states 
-    for idx in range(len(states)):
-        state = states[idx]
-        if state in dfaForPairs.get_accept_states():
-            prev[idx] = 1
-        else:
-            prev[idx] = 0
-    PerfTimer.end("build prev")
+        # Pre-compute transitions as a sparse structure using lists of lists
+        transitions = [[] for _ in range(num_states)]
+        base_transition_table = dfaForPairs.base_transition_table
 
-    for k in range(1, n + 1):
-        next = [0] * num_states
-        
         for j, from_state in enumerate(states):
-
-            # Failed state always fails
             if from_state[0] == failed_state or from_state[1] == failed_state:
-                next[j] = 0
                 continue
 
-            sum_value = 0
-            for input in dfaForPairs.get_alphabet():
-                # Get next state using delta transition
-                PerfTimer.cont("get_transition")
-                next_state = None
-                next_state = dfaForPairs.get_transition(from_state, input)
-                PerfTimer.end("get_transition")
-                
-                # Add if transition is valid
-                if next_state != None:
-                    if next_state[0] != failed_state and next_state[1] != failed_state:
-                        if next_state in state_to_index:
-                            next_state_idx = state_to_index[next_state]
-                            sum_value += prev[next_state_idx]
-            next[j] = sum_value
+            state1, state2 = from_state
+            for input1, input2 in dfaForPairs.get_alphabet():
+                next_state1 = base_transition_table[(state1, input1)]
+                next_state2 = base_transition_table[(state2, input2)]
 
-        prev = next.copy()       
+                if (next_state1 != failed_state and
+                    next_state2 != failed_state):
+                    next_state = (next_state1, next_state2)
+                    next_idx = state_to_index.get(next_state)
+                    if next_idx is not None:
+                        transitions[j].append(next_idx)
 
-    return prev[state_to_index[dfaForPairs.start_state]]
+        dfaForPairs._transitions_cache = transitions
 
+    state_to_index = dfaForPairs._state_to_index_cache
+    transitions = dfaForPairs._transitions_cache
 
-def countPairStrings_old(dfaForPairs, n):
-    states = list(dfaForPairs.get_states())
-    num_states = len(states)
-    # Avoid having to make a function call to do transition lookups
-    transition_table = dfaForPairs.get_transition_table()
+    # Set up accept states for all pairs
+    prev = np.zeros((num_pairs, num_states), dtype=np.int64)
+    base_accept_states = dfaForPairs.base_accept_states
 
-    state_to_index = {}
-    for idx in range(len(states)):
-        state = states[idx]
-        state_to_index[state] = idx    
+    for pair_idx, (start_state, first_final_state) in enumerate(pairs_list):
+        for s2 in base_accept_states:
+            state_pair = (first_final_state, s2)
+            if state_pair in state_to_index:
+                prev[pair_idx, state_to_index[state_pair]] = 1
 
-    prev = [0] * num_states 
-    for idx in range(len(states)):
-        state = states[idx]
-        if state in dfaForPairs.get_accept_states():
-            prev[idx] = 1
-        else:
-            prev[idx] = 0
+    # Process all pairs simultaneously
+    next = np.zeros((num_pairs, num_states), dtype=np.int64)
+    for _ in range(1, n + 1):
+        next.fill(0)
 
-    for k in range(1, n + 1):
-        next = [0] * num_states
-        
-        for j, from_state in enumerate(states):
+        for j in range(num_states):
+            # For each state, sum found transition counds
+            for next_state_idx in transitions[j]:
+                # Update all pairs
+                next[:, j] += prev[:, next_state_idx]
 
-            # Failed state always fails
-            if from_state[0] == failed_state or from_state[1] == failed_state:
-                next[j] = 0
-                continue
+        prev, next = next, prev
 
-            sum_value = 0
-            for input in dfaForPairs.get_alphabet():
-                # Get next state using delta transition
-                PerfTimer.cont("transition_table lookup")
-                next_state = transition_table.get((from_state, input))
-                PerfTimer.end("transition_table lookup")
-                
-                # Add if transition is valid
-                if next_state != None:
-                    if next_state[0] != failed_state and next_state[1] != failed_state:
-                        if next_state in state_to_index:
-                            next_state_idx = state_to_index[next_state]
-                            sum_value += prev[next_state_idx]
-            next[j] = sum_value
+    # Get final counts for each pair
+    results = []
+    for pair_idx, (start_state, first_final_state) in enumerate(pairs_list):
+        results.append(int(prev[pair_idx, state_to_index[start_state]]))
 
-        prev = next.copy()       
+    return results
 
-    return prev[state_to_index[dfaForPairs.start_state]]
 
 def state_length(state):
     if state == failed_state:
