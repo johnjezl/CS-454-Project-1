@@ -1,20 +1,20 @@
 from Delta import Delta
-from buildStates import failed_state
-from DFAForInputPairs import DFAForInputPairs
+from build_states import failed_state
+from ProductDFA import ProductDFA
 import numpy as np
 
 
 """
 Input:  
-    dfaForPairs - the DFA that accepts pairs of strings having all letters of alphabet in each substring of length 6
+    productDFA - the DFA that accepts pairs of strings having all letters of alphabet in each substring of length 6
     n - the length of one half of the string without the a  (original string length / 2 - 1)
 Output: 
-    the number of strings of length n accepted by dfaForPairs
+    the number of strings of length n accepted by productDFA
 Example:
-    input - countPairStrings(dfaForPairs, 1)    (original string length would be 4)
+    input - countPairStrings(productDFA, 1)    (original string length would be 4)
     output - 4      (because alphabet has 4 letters)
 Preconditions:
-    n >= 0 and dfaForPairs must contain all states and accepting states and have a transition table
+    n >= 0 and productDFA must contain all states and accepting states and have a transition table
 """
 def countValidStrings(dfa, n):
     states = list(dfa.get_states())
@@ -83,7 +83,7 @@ def countAASplitStrings(dfa, n):
         return 0  # Must be even length
 
     # Build DFA for Input Pairs once - we'll reuse it
-    dfaForPairs = DFAForInputPairs(dfa, (0, 0), 0)
+    productDFA = ProductDFA(dfa, (0, 0), 0)
 
     # Collect start_state and first_final_state pairs to compute simultaneously
     pairs_to_compute = []
@@ -107,7 +107,7 @@ def countAASplitStrings(dfa, n):
 
         pairs_to_compute.append(((0, q), p))
 
-    counts = countPairStrings(dfaForPairs, n//2 - 1, pairs_to_compute)
+    counts = countPairStrings(productDFA, n//2 - 1, pairs_to_compute)
     total_count = sum(counts)
 
     return total_count
@@ -117,38 +117,38 @@ def countAASplitStrings(dfa, n):
 
 """
 Input:  
-    dfaForPairs - the DFA that accepts pairs of strings having all letters of alphabet in each substring of length 6
+    productDFA - the DFA that accepts pairs of strings having all letters of alphabet in each substring of length 6
     n - the length of one half of the string without the a  (original string length / 2 - 1)
 Output: 
-    the number of strings of length n accepted by dfaForPairs
+    the number of strings of length n accepted by productDFA
 Example:
-    input - countPairStrings(dfaForPairs, 1)    (original string length would be 4)
+    input - countPairStrings(productDFA, 1)    (original string length would be 4)
     output - 4      (because alphabet has 4 letters)
 Preconditions:
-    n >= 0 and dfaForPairs must contain all states and accepting states and have a transition table
+    n >= 0 and productDFA must contain all states and accepting states and have a transition table
 """
-def countPairStrings(dfaForPairs, n, pairs_list):
-    states = dfaForPairs.get_states()
+def countPairStrings(productDFA, n, pairs_list):
+    states = productDFA.get_states()
     num_states = len(states)
     num_pairs = len(pairs_list)
 
     # Build state index map if not cached
-    if not hasattr(dfaForPairs, '_state_to_index_cache'):
+    if not hasattr(productDFA, '_state_to_index_cache'):
         state_to_index = {}
         for idx, state in enumerate(states):
             state_to_index[state] = idx
-        dfaForPairs._state_to_index_cache = state_to_index
+        productDFA._state_to_index_cache = state_to_index
 
         # Pre-compute transitions as a sparse structure using lists of lists
         transitions = [[] for _ in range(num_states)]
-        base_transition_table = dfaForPairs.base_transition_table
+        base_transition_table = productDFA.base_transition_table
 
         for j, from_state in enumerate(states):
             if from_state[0] == failed_state or from_state[1] == failed_state:
                 continue
 
             state1, state2 = from_state
-            for input1, input2 in dfaForPairs.get_alphabet():
+            for input1, input2 in productDFA.get_alphabet():
                 next_state1 = base_transition_table[(state1, input1)]
                 next_state2 = base_transition_table[(state2, input2)]
 
@@ -159,14 +159,14 @@ def countPairStrings(dfaForPairs, n, pairs_list):
                     if next_idx is not None:
                         transitions[j].append(next_idx)
 
-        dfaForPairs._transitions_cache = transitions
+        productDFA._transitions_cache = transitions
 
-    state_to_index = dfaForPairs._state_to_index_cache
-    transitions = dfaForPairs._transitions_cache
+    state_to_index = productDFA._state_to_index_cache
+    transitions = productDFA._transitions_cache
 
     # Set up accept states for all pairs
     prev = np.zeros((num_pairs, num_states), dtype=np.int64)
-    base_accept_states = dfaForPairs.base_accept_states
+    base_accept_states = productDFA.base_accept_states
 
     for pair_idx, (start_state, first_final_state) in enumerate(pairs_list):
         for s2 in base_accept_states:

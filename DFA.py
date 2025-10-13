@@ -1,5 +1,5 @@
 from Delta import Delta
-from buildStates import *
+from build_states import *
 
 class DFA:
     def __init__(self, states, alphabet, delta, start_state, accept_states):
@@ -86,7 +86,7 @@ class DFA:
         table = {}
 
         # Generate all states
-        states, accepting_states = buildStates()
+        states, accepting_states = build_states()
 
         # Build transition table using the delta passed to __init__
         for state in states:

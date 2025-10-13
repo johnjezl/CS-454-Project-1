@@ -17,7 +17,7 @@ Example:
 Preconditions:
     buildStatesHelper and failed_state must be defined, letters_to_add must be a positive int
 """
-def buildStates(letters_to_add = 5, state = 0):
+def build_states(letters_to_add = 5, state = 0):
     states, accepting_states = buildStatesHelper(letters_to_add, state, { 0, failed_state }, { 0 })
     return list(states), list(accepting_states)
 

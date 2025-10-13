@@ -1,8 +1,7 @@
 from Alphabet import alphabet
-from buildStates import *
+from build_states import *
 
 class Delta:
-
 
 
     """

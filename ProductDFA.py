@@ -1,6 +1,6 @@
 from Delta import *
 
-class DFAForInputPairs:
+class ProductDFA:
 
     def __init__(self, base_dfa, start_state, first_final_state):
         self.base_states = base_dfa.get_states()

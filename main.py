@@ -1,9 +1,13 @@
-from buildDFA import buildDFA
-# from countStrings import countValidStrings, countValidStringsUsingRecurrenceFormula, N, count_strings
-from countStrings import *
+from Alphabet import alphabet
+from DFA import DFA
+from build_states import build_states
+from count_strings import *
 import time
+
+
 """
-dfa = buildDFA()
+states, accepting_states = buildStates()
+dfa = DFA(states, alphabet, Delta(), 0, accepting_states)
 
 choice = "0"
 while (choice != "3"):
@@ -33,7 +37,8 @@ def test(input_string):
     result = dfa.process_input(input_string)
     print(f"Input: {input_string}, Accepted: {result}")
 
-dfa = buildDFA()
+states, accepting_states = build_states()
+dfa = DFA(states, alphabet, Delta(), 0, accepting_states)
 
 test("a")
 test("b")
