@@ -16,7 +16,8 @@ class Delta:
         Input - delta(1, a)
         Output - 9 (using base 8 encoding)
     Preconditions: 
-        failed_state and alphabet must be defined, state must be a valid state representing a string in the alphabet or failed state
+        failed_state and alphabet must be defined
+        state must be a valid state representing a string in the alphabet or failed state
     """
     @staticmethod
     def delta(state, input):

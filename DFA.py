@@ -2,6 +2,25 @@ from Delta import Delta
 from build_states import *
 
 class DFA:
+
+    """
+    Input:
+        self - the dfa itself
+        states - a list of the states of the dfa
+        alphabet - the alphabet used by the dfa
+        delta - the delta function of the dfa
+        start_state - the start state of the dfa
+        accept_states - a list of the accepting states of the dfa
+    Output:
+        None, a dfa is initialized with the above
+    Example:
+        Call - DFA(states, alphabet, delta, start_state, accept_states)
+        Result - dfa is initialized with the above
+    Preconditions:
+        'delta' contains transitions for states in 'states' and on inputs from 'alphabet'
+        All 'accepting_states' are also in 'states'
+        'start_state' exists in 'states'
+    """
     def __init__(self, states, alphabet, delta, start_state, accept_states):
         self.states = states.copy()
         self.alphabet = alphabet.copy()
@@ -10,18 +29,83 @@ class DFA:
         self.start_state = start_state
         self.accept_states = accept_states.copy()
 
+
+
+    """
+    Input:
+        self - the dfa itself
+    Output:
+        A list of the states in the dfa
+    Example:
+        Call - dfa.get_states()
+        Output - The states in the dfa as a list
+    Preconditions:
+        None
+    """
     def get_states(self):
         return self.states
 
+
+
+    """
+    Input:
+        self - the dfa itself
+    Output:
+        A list of the accepting states of the dfa
+    Example:
+        Call - dfa.get_accept_states()
+        Output - The accepting states of the dfa as a list
+    Preconditions:
+        None
+    """
     def get_accept_states(self):
         return self.accept_states
 
+
+
+    """
+    Input:
+        self - the dfa itself
+    Output:
+        The delta function of the dfa
+    Example:
+        Call - dfa.get_delta()
+        Output - The delta function of the dfa
+    Preconditions:
+        None
+    """
     def get_delta(self):
         return self.delta
-    
+
+
+
+    """
+    Input:
+        self - the dfa itself
+    Output:
+        The alphabet used by the dfa in list form
+    Example:
+        Call - dfa.get_alphabet()
+        Output - The alphabet used by the dfa in list form (a, b, c, d)
+    Preconditions:
+        None
+    """
     def get_alphabet(self):
         return self.alphabet
-    
+
+
+
+    """
+    Input:
+        self - the dfa itself
+    Output:
+        The transition table of the dfa in form of a dictionary
+    Example:
+        Call - dfa.get_transition_table()
+        Output - The transition table of the dfa in dictionary form
+    Preconditions:
+        None
+    """
     def get_transition_table(self):
         return self.transition_table
 
@@ -33,7 +117,7 @@ class DFA:
         state - the current state to transition from
         input_symbol - the input symbol to transition on
     Output: 
-        the state the DFA goes to on delta(state, input_symbol) or failed_state if there was no state to go to
+        The state the DFA goes to on delta(state, input_symbol) or failed_state if there was no state to go to
     Example:
         Input - self.transition(1, a)
         Output - 9 (using base 8 encoding)
@@ -44,7 +128,6 @@ class DFA:
         if (state, input_symbol) in self.transition_table:
             return self.transition_table[(state, input_symbol)]
         return failed_state
-
 
 
 
@@ -67,7 +150,6 @@ class DFA:
                 raise ValueError(f"Symbol '{symbol}' not in alphabet")
             current_state = self.transition(current_state, symbol)
         return current_state in self.accept_states
-
 
 
 
@@ -95,7 +177,6 @@ class DFA:
                 table[(state, symbol)] = next_state
 
         return table
-
 
 
 

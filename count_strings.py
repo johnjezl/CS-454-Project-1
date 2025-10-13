@@ -6,15 +6,17 @@ import numpy as np
 
 """
 Input:  
-    productDFA - the DFA that accepts pairs of strings having all letters of alphabet in each substring of length 6
-    n - the length of one half of the string without the a  (original string length / 2 - 1)
+    dfa - the dfa that accepts pairs of strings having all letters of alphabet in each substring of length 6
+    n - the length to count valid strings for
 Output: 
-    the number of strings of length n accepted by productDFA
+    the number of strings of length n accepted by dfa
 Example:
-    input - countPairStrings(productDFA, 1)    (original string length would be 4)
+    input - countValidStrings(dfa, 1)    
     output - 4      (because alphabet has 4 letters)
 Preconditions:
-    n >= 0 and productDFA must contain all states and accepting states and have a transition table
+    n >= 0
+    dfa must contain all states and accepting states and delta function
+    failed state must be defined
 """
 def countValidStrings(dfa, n):
     states = list(dfa.get_states())
@@ -65,6 +67,7 @@ def countValidStrings(dfa, n):
         return 0
 
 
+
 """
 Input:  
     dfa - the DFA that accepts strings having all letters of alphabet in each substring of length 6
@@ -76,7 +79,10 @@ Example:
     input - countAASplitStrings(dfa, 2) with alphabet of 4
     output - 1
 Preconditions:
-    n >= 0 and dfa must contain all states and accepting states and have a delta function
+    n >= 0
+    dfa must contain all states and accepting states and have a transition function
+    productDFA class must exist
+    failed state must be defined
 """
 def countAASplitStrings(dfa, n):
     if n % 2 != 0:
@@ -119,13 +125,17 @@ def countAASplitStrings(dfa, n):
 Input:  
     productDFA - the DFA that accepts pairs of strings having all letters of alphabet in each substring of length 6
     n - the length of one half of the string without the a  (original string length / 2 - 1)
+    pairs_list - pairs of start states and first final states
 Output: 
     the number of strings of length n accepted by productDFA
 Example:
     input - countPairStrings(productDFA, 1)    (original string length would be 4)
     output - 4      (because alphabet has 4 letters)
 Preconditions:
-    n >= 0 and productDFA must contain all states and accepting states and have a transition table
+    n >= 0, must be half the original string length - 1
+    productDFA must contain all states and accepting states and have a transition table
+    failed state must be defined
+    pairs_list must contain valid pairs
 """
 def countPairStrings(productDFA, n, pairs_list):
     states = productDFA.get_states()
@@ -193,6 +203,7 @@ def countPairStrings(productDFA, n, pairs_list):
         results.append(int(prev[pair_idx, state_to_index[start_state]]))
 
     return results
+
 
 
 """
