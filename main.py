@@ -1,5 +1,3 @@
-from numpy.f2py.auxfuncs import isinteger
-
 from Alphabet import alphabet
 from DFA import DFA
 from build_states import build_states
@@ -17,10 +15,10 @@ while (choice != "3"):
     print("(1) Count number of strings of length n in L")
     print("(2) Count number of strings of length n in L'")
     print("(3) Quit")
-    choice = getpass("Choice: ")
+    choice = input("Choice: ")
 
     if (choice == "1"):
-        n = (getpass(f"Value for n (1-300): "))    #n should be between 1-300
+        n = (input(f"Value for n (1-300): "))    #n should be between 1-300
         if n.isnumeric():
             n = int(n)
         else:
@@ -34,7 +32,7 @@ while (choice != "3"):
 
 
     elif (choice == "2"):
-        n = getpass(f"Value for n (1-300): ")
+        n = input(f"Value for n (1-300): ")
         if n.isnumeric():
             n = int(n)
         else:

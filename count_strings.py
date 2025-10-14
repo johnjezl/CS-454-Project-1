@@ -175,7 +175,7 @@ def countPairStrings(productDFA, n, pairs_list):
     transitions = productDFA._transitions_cache
 
     # Set up accept states for all pairs
-    prev = np.zeros((num_pairs, num_states), dtype=np.int64)
+    prev = np.zeros((num_pairs, num_states), dtype=object)
     base_accept_states = productDFA.base_accept_states
 
     for pair_idx, (start_state, first_final_state) in enumerate(pairs_list):
@@ -185,7 +185,7 @@ def countPairStrings(productDFA, n, pairs_list):
                 prev[pair_idx, state_to_index[state_pair]] = 1
 
     # Process all pairs simultaneously
-    next = np.zeros((num_pairs, num_states), dtype=np.int64)
+    next = np.zeros((num_pairs, num_states), dtype=object)
     for _ in range(1, n + 1):
         next.fill(0)
 
