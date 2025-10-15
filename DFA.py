@@ -120,7 +120,7 @@ class DFA:
         The state the DFA goes to on delta(state, input_symbol) or failed_state if there was no state to go to
     Example:
         Input - self.transition(1, a)
-        Output - 9 (using base 8 encoding)
+        Output - 6
     Preconditions: 
         failed_state is defined
     """
@@ -181,10 +181,10 @@ class DFA:
 
 
     """
-    Input:  
+    Input:
         self - the DFA itself
         state - the state to be converted to a string using the alphabet
-    Output: 
+    Output:
         state_string - the state in the form of a string using the alphabet
         or "failed_state" if state == -1
         or "start" if state == 0
@@ -200,9 +200,22 @@ class DFA:
             return "failed_state"
         if state == 0:
             return "start"
-        while (state > 0):
-            letter_idx = (state & 0xf) - 1
+
+        depth = 0
+        remaining = state
+        while remaining > 0:
+            # Extract the symbol value
+            symbol_value = remaining % 4
+            if symbol_value == 0:
+                symbol_value = 4
+                remaining = (remaining // 4) - 1
+            else:
+                remaining = remaining // 4
+
+            # Convert contribution to letter (1->a, 2->b, 3->c, 4->d)
+            letter_idx = symbol_value - 1
             state_string = state_string + self.alphabet[letter_idx]
-            state = state >> 4
+            depth += 1
+
         return state_string
 

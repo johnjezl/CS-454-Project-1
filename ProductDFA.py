@@ -2,8 +2,6 @@ from Delta import *
 
 class ProductDFA:
 
-
-
     """
     Input:
         self - the product dfa itself
@@ -28,6 +26,10 @@ class ProductDFA:
         self.transition_cache = {}
         self.start_state = start_state
         self.first_final_state = first_final_state
+
+        # Calculate max state value for contiguous indexing
+        self.max_base_state = max(s for s in self.base_states if s != -1) + 1
+
         self.states = self.generate_states(self.base_states)
         self.accept_states = self.generate_accept_states()
         self.alphabet = self.gen_alphabet()
@@ -100,8 +102,9 @@ class ProductDFA:
         # and both are accepting states of the base DFA
         accept_states = set()
         for s2 in self.base_accept_states:
-            if (self.first_final_state, s2) in self.states:
-                accept_states.add((self.first_final_state, s2))
+            encoded_state = self.encode_state_pair(self.first_final_state, s2)
+            if encoded_state in self.states:
+                accept_states.add(encoded_state)
         return accept_states
 
 
@@ -109,14 +112,47 @@ class ProductDFA:
     """
     Input:
         self - the product dfa itself
+        s1 - first component of the state pair
+        s2 - second component of the state pair
+    Output:
+        encoded state as a single integer using formula: s1 * max_base_state + s2
+    Example:
+        Call - productDFA.encode_state_pair(5, 3) with max_base_state=1365
+        Output - 6828 (5 * 1365 + 3)
+    Preconditions:
+        max_base_state must be set
+    """
+    def encode_state_pair(self, s1, s2):
+        return s1 * self.max_base_state + s2
+
+    """
+    Input:
+        self - the product dfa itself
+        encoded_state - the encoded state as a single integer
+    Output:
+        tuple (s1, s2) representing the state pair
+    Example:
+        Call - productDFA.decode_state_pair(6828) with max_base_state=1365
+        Output - (5, 3)
+    Preconditions:
+        max_base_state must be set
+    """
+    def decode_state_pair(self, encoded_state):
+        s1 = encoded_state // self.max_base_state
+        s2 = encoded_state % self.max_base_state
+        return (s1, s2)
+
+    """
+    Input:
+        self - the product dfa itself
         states - the states that will be made into pairs for the product dfa
     Output:
-        a sorted list of state pairs
+        a sorted list of encoded state pairs (as single integers)
     Example:
         Call - productDFA.generate_states()
-        Result - productDFA now has a sorted list of state pairs
+        Result - productDFA now has a sorted list of encoded state pairs
     Preconditions:
-        failed_state is defined
+        failed_state is defined, max_base_state must be set
     """
     def generate_states(self, states):
         state_pairs = []
@@ -124,7 +160,8 @@ class ProductDFA:
             if s1 != failed_state:
                 for s2 in states:
                     if s2 != failed_state:
-                        state_pairs.append((s1, s2))
+                        encoded = self.encode_state_pair(s1, s2)
+                        state_pairs.append(encoded)
         return sorted(state_pairs)
 
 
@@ -152,20 +189,20 @@ class ProductDFA:
     """
     Input:
         self - the product dfa itself
-        state1 - the first state in a pair
-        state2 - the second state in a pair
+        encoded_state - the encoded product state (s1 * max_base_state + s2)
         sym1 - the first input symbol in a pair
         sym2 - the second input symbol in a pair
     Output:
-        the pairs of states and symbols encoded to a single int
+        the state and symbols encoded to a single int for caching
     Example:
-        Call - productDFA.encode_key_to_int(state1, state2, sym1, sym2)
+        Call - productDFA.encode_key_to_int(encoded_state, sym1, sym2)
         Output - the inputs encoded into one int
     Preconditions:
         None
     """
-    def encode_key_to_int(self, state1, state2, sym1, sym2):
-        return (state1 << 44) | (state2 << 24) | (self.alpha_to_idx[sym1] << 4) | self.alpha_to_idx[sym2]
+    def encode_key_to_int(self, encoded_state, sym1, sym2):
+        # Use bit shifting: encoded_state | (sym1_idx << some_bits) | sym2_idx
+        return (encoded_state << 8) | (self.alpha_to_idx[sym1] << 4) | self.alpha_to_idx[sym2]
 
 
 
@@ -189,14 +226,15 @@ class ProductDFA:
     """
     Input:
         self - the product dfa itself
-        state - a set of a pair of states
+        state - an encoded state (single integer)
     Output:
-        the pair of states printed in form (state[0] : state[1])
+        the pair of states printed in form (state1 : state2)
     Example:
-        Call - productDFA.pretty_print_state({0, 1}) 
-        Output - (0 : 1)
+        Call - productDFA.pretty_print_state(6828)
+        Output - (5 : 3) or in pretty form using base DFA names
     Preconditions:
-        state must contain elements at indexes 0 and 1
+        state must be a valid encoded state
     """
     def pretty_print_state(self, state):
-        return f"({self.base_dfa.pretty_print_state(state[0])} : {self.base_dfa.pretty_print_state(state[1])})"
+        s1, s2 = self.decode_state_pair(state)
+        return f"({self.base_dfa.pretty_print_state(s1)} : {self.base_dfa.pretty_print_state(s2)})"
