@@ -98,8 +98,6 @@ Preconditions:
     dfa must contain all states and accepting states and have a transition function
 """
 def countAASplitStrings(dfa, n):
-    from ProductDFA import ProductDFA
-
     if n % 2 != 0:
         return 0
 
@@ -107,31 +105,72 @@ def countAASplitStrings(dfa, n):
     if half_len < 0:
         return 0
 
-    # Create ProductDFA with lazy state generation
-    # Both components start at start_state (0), first_final_state is unused now
-    prod_dfa = ProductDFA(dfa, dfa.start_state, dfa.start_state)
+    states = list(dfa.get_states())
+    num_states = len(states)
+    accepting_states = set(dfa.get_accept_states())
 
-    # Start state: both DFAs at start (0, 0)
-    start_encoded = prod_dfa.encode_state_pair(0, 0)
-
-    # Forward DP using ProductDFA
-    # Track how many ways to reach each ProductDFA state from start
-    # After half_len steps, both components will have processed their respective halves
-    counts = {start_encoded: 1}
+    # PHASE 1: Forward DP through left_half
+    # Count ways to reach each state after processing left_half
+    left_counts = [0] * num_states
+    left_counts[dfa.start_state] = 1
 
     for _ in range(half_len):
-        next_counts = {}
-        for state, count in counts.items():
-            # Get all forward transitions (cached internally)
-            for _, next_state in prod_dfa.get_forward_transitions(state):
-                next_counts[next_state] = next_counts.get(next_state, 0) + count
-        counts = next_counts
+        next_counts = [0] * num_states
+        for state_idx in range(num_states):
+            if left_counts[state_idx] == 0:
+                continue
+            state = states[state_idx]
+            if state == -1:
+                continue
 
-    # Count paths that end at accepting states
-    # Accepting means both left_half and right_half are accepted by the base DFA
+            for symbol in dfa.get_alphabet():
+                next_state = dfa.transition(state, symbol)
+                if next_state != -1:
+                    next_counts[next_state] += left_counts[state_idx]
+
+        left_counts = next_counts
+
+    # PHASE 2: Transition on "aa"
+    # From each state reached by left_half, transition on 'a' then 'a'
+    middle_counts = [0] * num_states
+    for state_idx in range(num_states):
+        if left_counts[state_idx] == 0:
+            continue
+        state = states[state_idx]
+        if state == -1:
+            continue
+
+        # Transition on 'a' twice
+        mid_state = dfa.transition(state, 'a')
+        if mid_state != -1:
+            final_state = dfa.transition(mid_state, 'a')
+            if final_state != -1:
+                middle_counts[final_state] += left_counts[state_idx]
+
+    # PHASE 3: Forward DP through right_half
+    # Starting from middle states, count ways to reach accepting states
+    right_counts = middle_counts
+
+    for _ in range(half_len):
+        next_counts = [0] * num_states
+        for state_idx in range(num_states):
+            if right_counts[state_idx] == 0:
+                continue
+            state = states[state_idx]
+            if state == -1:
+                continue
+
+            for symbol in dfa.get_alphabet():
+                next_state = dfa.transition(state, symbol)
+                if next_state != -1:
+                    next_counts[next_state] += right_counts[state_idx]
+
+        right_counts = next_counts
+
+    # PHASE 4: Count accepting states
     total = 0
-    for state, count in counts.items():
-        if prod_dfa.is_accept_state(state):
-            total += count
+    for state_idx in range(num_states):
+        if states[state_idx] in accepting_states:
+            total += right_counts[state_idx]
 
     return int(total)

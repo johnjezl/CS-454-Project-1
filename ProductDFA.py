@@ -246,8 +246,8 @@ class ProductDFA:
 
         next_state = self.encode_state_pair(next_s1, next_s2)
 
-        # Register backward transition for lazy reverse map building
-        self.register_backward_transition(state, next_state)
+        # Note: Backward transition registration removed for performance
+        # It was only needed for backward DP, which we no longer use
 
         return next_state
 

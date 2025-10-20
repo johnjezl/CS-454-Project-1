@@ -29,6 +29,9 @@ class DFA:
         self.start_state = start_state
         self.accept_states = accept_states.copy()
 
+        # Pre-compute symbol-to-index mapping for O(1) lookup
+        self.symbol_to_idx = {symbol: idx for idx, symbol in enumerate(alphabet)}
+
 
 
     """
@@ -125,7 +128,8 @@ class DFA:
         failed_state is defined
     """
     def transition(self, state, input_symbol):
-        return self.transition_table[state][self.alphabet.index(input_symbol)]
+        # Use pre-computed mapping instead of linear search
+        return self.transition_table[state][self.symbol_to_idx[input_symbol]]
 
 
 
