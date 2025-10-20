@@ -1,5 +1,5 @@
-from build_states import *
-from Alphabet import alphabet
+from DFA import *
+
 
 class Delta:
 

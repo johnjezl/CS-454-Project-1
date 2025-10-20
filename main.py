@@ -1,5 +1,5 @@
-from Alphabet import alphabet
-from DFA import DFA
+from Delta import Delta
+from DFA import *
 from build_states import build_states
 from count_strings import *
 from ProductDFA import ProductDFA

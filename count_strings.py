@@ -1,28 +1,4 @@
-from Delta import Delta
-from build_states import failed_state
-
-
-class DFAWrapper:
-    """
-    Wrapper around DFA that provides a delta function with symbol indices.
-    """
-    def __init__(self, dfa):
-        self.dfa = dfa
-        self.alphabet = dfa.get_alphabet()
-        self.symbol_to_idx = {sym: i for i, sym in enumerate(self.alphabet)}
-
-    def delta(self, state, symbol_idx):
-        """
-        Input:
-            state - the current state number
-            symbol_idx - the index of the symbol in the alphabet (0-3)
-        Output:
-            the new state after transition, or failed_state if invalid
-        """
-        if symbol_idx < 0 or symbol_idx >= len(self.alphabet):
-            return failed_state
-        symbol = self.alphabet[symbol_idx]
-        return self.dfa.transition(state, symbol)
+from DFA import failed_state
 
 
 """
@@ -36,7 +12,7 @@ Example:
     output - 4      (because alphabet has 4 letters)
 Preconditions:
     n >= 0
-    dfa must contain all states and accepting states and delta function
+    dfa must contain all states and accepting states and transition function
 """
 def countValidStrings(dfa, n):
     states = list(dfa.get_states())

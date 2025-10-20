@@ -1,5 +1,6 @@
-from Delta import Delta
-from build_states import *
+
+alphabet = list(['a', 'b', 'c', 'd'])
+failed_state = -1
 
 class DFA:
 
@@ -130,28 +131,6 @@ class DFA:
     def transition(self, state, input_symbol):
         # Use pre-computed mapping instead of linear search
         return self.transition_table[state][self.symbol_to_idx[input_symbol]]
-
-
-
-    """
-    Input:  
-        self - the DFA itself
-        input_string - a string made from the alphabet
-    Output: 
-        true if the current_state is an accepting state, false if it is not
-    Example:
-        Input - self.process_input(abc)
-        Output - true
-    Preconditions:
-        None
-    """
-    def process_input(self, input_string):
-        current_state = self.start_state
-        for symbol in input_string:
-            if symbol not in self.alphabet:
-                raise ValueError(f"Symbol '{symbol}' not in alphabet")
-            current_state = self.transition(current_state, symbol)
-        return current_state in self.accept_states
 
 
 

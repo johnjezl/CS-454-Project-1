@@ -51,11 +51,6 @@ class ProductDFA:
         # PDF spec: Start state is (0, q) where q = δ(p, "aa")
         self.product_start_state = self.encode_state_pair(0, q)
 
-        # Lazy state generation - no upfront state generation
-        # States are created on-demand through delta transitions
-        self.forward_trans_cache = {}  # Cache for forward transitions
-        self.backward_trans_cache = {}  # Cache for backward transitions
-
 
 
     """
@@ -135,75 +130,6 @@ class ProductDFA:
         s1 = encoded_state // self.num_base_states
         s2 = encoded_state % self.num_base_states
         return (s1, s2)
-
-    """
-    Input:
-        self - the product dfa itself
-        encoded_state - the current encoded state (single integer)
-    Output:
-        list of (symbol_idx, next_encoded_state) pairs for all valid transitions
-    Example:
-        Call - productDFA.get_forward_transitions(0)
-        Output - [(0, 1366), (1, 2732), (2, 4098), (3, 5464)]
-    Preconditions:
-        None
-    """
-    def get_forward_transitions(self, encoded_state):
-        if encoded_state in self.forward_trans_cache:
-            return self.forward_trans_cache[encoded_state]
-
-        transitions = []
-        # Iterate over all symbols in Σ×Σ (0-15 for 4-letter alphabet)
-        for sym_idx in range(self.alphabet_size):
-            next_state = self.delta(encoded_state, sym_idx)
-            if next_state != failed_state:
-                transitions.append((sym_idx, next_state))
-
-        self.forward_trans_cache[encoded_state] = transitions
-        return transitions
-
-
-
-    """
-    Input:
-        self - the product dfa itself
-        encoded_state - the current encoded state
-    Output:
-        list of encoded states that can reach encoded_state in one transition
-    Example:
-        Call - productDFA.get_backward_transitions(1366)
-        Output - [0]  # Only state (0,0) can reach state (1,1) via 'a'
-    Preconditions:
-        Must call get_forward_transitions first to build the reverse map
-    """
-    def get_backward_transitions(self, encoded_state):
-        if encoded_state in self.backward_trans_cache:
-            return self.backward_trans_cache[encoded_state]
-        # This will be built lazily as forward transitions are discovered
-        return []
-
-
-
-    """
-    Input:
-        self - the product dfa itself
-        from_state - the encoded state transitioning from
-        to_state - the encoded state transitioning to
-    Output:
-        None (updates internal backward transition cache)
-    Example:
-        Call - productDFA.register_backward_transition(0, 1366)
-        Result - backward_trans_cache[1366] will include 0
-    Preconditions:
-        None
-    """
-    def register_backward_transition(self, from_state, to_state):
-        if to_state not in self.backward_trans_cache:
-            self.backward_trans_cache[to_state] = []
-        if from_state not in self.backward_trans_cache[to_state]:
-            self.backward_trans_cache[to_state].append(from_state)
-
-
 
     """
     Input:
