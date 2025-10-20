@@ -126,14 +126,14 @@ def countAASplitStrings(dfa, n):
     num_states = len(states)
 
     # PHASE 1: Forward DP through left_half
-    # left_counts[i] = number of ways to reach states[i] after half_len steps
-    left_counts = [0] * num_states
-    left_counts[dfa.start_state] = 1
+    # prev[i] = number of ways to reach states[i]
+    prev = [0] * num_states
+    prev[dfa.start_state] = 1
 
     for _ in range(half_len):
-        next_counts = [0] * num_states
+        next = [0] * num_states
         for from_idx in range(num_states):
-            if left_counts[from_idx] == 0:
+            if prev[from_idx] == 0:
                 continue
             from_state = states[from_idx]
             if from_state == -1:
@@ -142,15 +142,15 @@ def countAASplitStrings(dfa, n):
             for symbol in dfa.get_alphabet():
                 next_state = dfa.transition(from_state, symbol)
                 if next_state != -1:
-                    next_counts[next_state] += left_counts[from_idx]
+                    next[next_state] += prev[from_idx]
 
-        left_counts = next_counts
+        prev = next
 
     # PHASE 2: Transition on "aa"
-    # middle_counts[i] = number of ways to reach states[i] after left_half + "aa"
-    middle_counts = [0] * num_states
+    # next[i] = number of ways to reach states[i] after left_half + "aa"
+    next = [0] * num_states
     for state_idx in range(num_states):
-        if left_counts[state_idx] == 0:
+        if prev[state_idx] == 0:
             continue
         state = states[state_idx]
         if state == -1:
@@ -161,16 +161,15 @@ def countAASplitStrings(dfa, n):
         if mid_state != -1:
             final_state = dfa.transition(mid_state, 'a')
             if final_state != -1:
-                middle_counts[final_state] += left_counts[state_idx]
+                next[final_state] += prev[state_idx]
 
     # PHASE 3: Forward DP through right_half
-    # right_counts[i] = number of ways to reach states[i] after full string
-    right_counts = middle_counts.copy()
+    prev = next
 
     for _ in range(half_len):
-        next_counts = [0] * num_states
+        next = [0] * num_states
         for from_idx in range(num_states):
-            if right_counts[from_idx] == 0:
+            if prev[from_idx] == 0:
                 continue
             from_state = states[from_idx]
             if from_state == -1:
@@ -179,14 +178,14 @@ def countAASplitStrings(dfa, n):
             for symbol in dfa.get_alphabet():
                 next_state = dfa.transition(from_state, symbol)
                 if next_state != -1:
-                    next_counts[next_state] += right_counts[from_idx]
+                    next[next_state] += prev[from_idx]
 
-        right_counts = next_counts
+        prev = next
 
     # Count accepting states
     total = 0
     for state_idx in range(num_states):
         if states[state_idx] in dfa.get_accept_states():
-            total += right_counts[state_idx]
+            total += prev[state_idx]
 
     return int(total)
