@@ -98,6 +98,23 @@ Preconditions:
     dfa must contain all states and accepting states and have a transition function
 """
 def countAASplitStrings(dfa, n):
+    """
+    Count strings in L' using 3-phase forward DP.
+
+    L' = {w | w is in L, |w| is even and the middle two characters are "aa"}
+
+    PDF spec relationship: This algorithm is mathematically equivalent to building
+    ProductDFA Mp for each p ∈ Q and summing L(M0) ∪ L(M1) ∪ ⋯, but uses a more
+    efficient implementation that avoids building 1365 separate ProductDFAs.
+
+    The 3-phase approach:
+    1. Forward DP through left_half: count ways to reach each state p
+    2. Transition on "aa": from each state p, compute q = δ(p, "aa")
+    3. Forward DP through right_half: count ways to reach accepting states from q
+
+    This implicitly sums over all possible values of p (as required by PDF),
+    weighted by the number of paths that reach each p in the left half.
+    """
     if n % 2 != 0:
         return 0
 
@@ -107,31 +124,30 @@ def countAASplitStrings(dfa, n):
 
     states = list(dfa.get_states())
     num_states = len(states)
-    accepting_states = set(dfa.get_accept_states())
 
     # PHASE 1: Forward DP through left_half
-    # Count ways to reach each state after processing left_half
+    # left_counts[i] = number of ways to reach states[i] after half_len steps
     left_counts = [0] * num_states
     left_counts[dfa.start_state] = 1
 
     for _ in range(half_len):
         next_counts = [0] * num_states
-        for state_idx in range(num_states):
-            if left_counts[state_idx] == 0:
+        for from_idx in range(num_states):
+            if left_counts[from_idx] == 0:
                 continue
-            state = states[state_idx]
-            if state == -1:
+            from_state = states[from_idx]
+            if from_state == -1:
                 continue
 
             for symbol in dfa.get_alphabet():
-                next_state = dfa.transition(state, symbol)
+                next_state = dfa.transition(from_state, symbol)
                 if next_state != -1:
-                    next_counts[next_state] += left_counts[state_idx]
+                    next_counts[next_state] += left_counts[from_idx]
 
         left_counts = next_counts
 
     # PHASE 2: Transition on "aa"
-    # From each state reached by left_half, transition on 'a' then 'a'
+    # middle_counts[i] = number of ways to reach states[i] after left_half + "aa"
     middle_counts = [0] * num_states
     for state_idx in range(num_states):
         if left_counts[state_idx] == 0:
@@ -140,7 +156,7 @@ def countAASplitStrings(dfa, n):
         if state == -1:
             continue
 
-        # Transition on 'a' twice
+        # Transition on 'a' then 'a'
         mid_state = dfa.transition(state, 'a')
         if mid_state != -1:
             final_state = dfa.transition(mid_state, 'a')
@@ -148,29 +164,29 @@ def countAASplitStrings(dfa, n):
                 middle_counts[final_state] += left_counts[state_idx]
 
     # PHASE 3: Forward DP through right_half
-    # Starting from middle states, count ways to reach accepting states
-    right_counts = middle_counts
+    # right_counts[i] = number of ways to reach states[i] after full string
+    right_counts = middle_counts.copy()
 
     for _ in range(half_len):
         next_counts = [0] * num_states
-        for state_idx in range(num_states):
-            if right_counts[state_idx] == 0:
+        for from_idx in range(num_states):
+            if right_counts[from_idx] == 0:
                 continue
-            state = states[state_idx]
-            if state == -1:
+            from_state = states[from_idx]
+            if from_state == -1:
                 continue
 
             for symbol in dfa.get_alphabet():
-                next_state = dfa.transition(state, symbol)
+                next_state = dfa.transition(from_state, symbol)
                 if next_state != -1:
-                    next_counts[next_state] += right_counts[state_idx]
+                    next_counts[next_state] += right_counts[from_idx]
 
         right_counts = next_counts
 
-    # PHASE 4: Count accepting states
+    # Count accepting states
     total = 0
     for state_idx in range(num_states):
-        if states[state_idx] in accepting_states:
+        if states[state_idx] in dfa.get_accept_states():
             total += right_counts[state_idx]
 
     return int(total)

@@ -16,26 +16,40 @@ class ProductDFA:
     Preconditions:
         base_dfa must be initialized with states, accepting states, transition table, and alphabet
     """
-    def __init__(self, base_dfa, start_state, first_final_state):
+    def __init__(self, base_dfa, p, q):
+        """
+        Initialize ProductDFA Mp as specified in PDF.
+
+        PDF spec: Mp = ⟨Q × Q, Σ × Σ, δ1, (0, p), F1⟩ where
+        - δ1((q1, q2), (a1, a2)) = (δ(q1, a1), δ(q2, a2))
+        - F1 = {(p, f) | f ∈ F}
+
+        For AA-split problem:
+        - p = 0 (start state) - this is what first component must equal to accept
+        - q = δ(p, "aa") - this is where second component starts
+
+        Args:
+            p: The state that first component must equal for accepting (typically 0)
+            q: The initial state for second component = δ(p, "aa")
+        """
         self.base_dfa = base_dfa
         self.base_accept_states = set(base_dfa.get_accept_states())
         self.base_alphabet = self.base_dfa.get_alphabet()
-        self.start_state = start_state
-        self.first_final_state = first_final_state
+        self.p = p  # First component must equal this to accept
+        self.q = q  # Second component starts here
 
-        # Base DFA uses sequential state numbering: 0, 1, 2, 3, ..., 1365
+        # Base DFA uses sequential state numbering: 0, 1, 2, 3, ..., 1364
         # We can directly use state values as indices (no mapping needed)
         base_states = [s for s in base_dfa.get_states() if s != -1]
-        self.num_base_states = len(base_states)  # 1366 states (0-1365)
+        self.num_base_states = len(base_states)  # 1365 states (0-1364)
 
-        # PDF spec: alphabet is Σ×Σ, indexed 0-15 for 4-letter base alphabet
+        # PDF spec: alphabet is Σ × Σ, indexed 0-15 for 4-letter base alphabet
         # Symbol i represents pair (a1, a2) where:
         # a1 = i // 4, a2 = i % 4 (both 0-3)
         self.alphabet_size = len(self.base_alphabet) * len(self.base_alphabet)
 
-        # For AA-split problem: start state is (start, start)
-        # Both components start from the base DFA start state
-        self.product_start_state = self.encode_state_pair(start_state, start_state)
+        # PDF spec: Start state is (0, q) where q = δ(p, "aa")
+        self.product_start_state = self.encode_state_pair(0, q)
 
         # Lazy state generation - no upfront state generation
         # States are created on-demand through delta transitions
@@ -73,9 +87,11 @@ class ProductDFA:
         None
     """
     def is_accept_state(self, encoded_state):
-        # For AA-split: accepting if BOTH components are in accepting states
+        # PDF spec: F = {(p, f) | f ∈ F} where p = first component acceptance criterion
+        # Accepting states are those where first component equals p
+        # and second component is in base DFA's accepting states
         s1, s2 = self.decode_state_pair(encoded_state)
-        return s1 in self.base_accept_states and s2 in self.base_accept_states
+        return s1 == self.p and s2 in self.base_accept_states
 
 
 

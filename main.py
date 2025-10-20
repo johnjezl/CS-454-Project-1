@@ -7,7 +7,12 @@ from ProductDFA import ProductDFA
 
 states, accepting_states = build_states()
 dfa = DFA(states, alphabet, Delta(), 0, accepting_states)
-prod_dfa = ProductDFA(dfa, 0, 0)  # Create ProductDFA for option 3
+
+# Create ProductDFA for option 3 with correct parameters
+# p = 0 (acceptance criterion for first component)
+# q = δ(δ(0, 'a'), 'a') = δ(0, "aa") (start state for second component)
+q_after_aa = dfa.transition(dfa.transition(0, 'a'), 'a')
+prod_dfa = ProductDFA(dfa, 0, q_after_aa)
 
 choice = "0"
 while (choice != "4"):
