@@ -17,23 +17,30 @@ class ProductDFA:
         base_dfa must be initialized with states, accepting states, transition table, and alphabet
     """
     def __init__(self, base_dfa, start_state, first_final_state):
-        self.base_states = base_dfa.get_states()
         self.base_dfa = base_dfa
-        self.base_accept_states = base_dfa.get_accept_states()
+        self.base_accept_states = set(base_dfa.get_accept_states())
         self.base_alphabet = self.base_dfa.get_alphabet()
-        self.base_transition_table = self.base_dfa.get_transition_table()
-        self.accept_states = set()
-        self.transition_cache = {}
         self.start_state = start_state
         self.first_final_state = first_final_state
 
-        # Calculate max state value for contiguous indexing
-        self.max_base_state = max(s for s in self.base_states if s != -1) + 1
+        # Base DFA uses sequential state numbering: 0, 1, 2, 3, ..., 1365
+        # We can directly use state values as indices (no mapping needed)
+        base_states = [s for s in base_dfa.get_states() if s != -1]
+        self.num_base_states = len(base_states)  # 1366 states (0-1365)
 
-        self.states = self.generate_states(self.base_states)
-        self.accept_states = self.generate_accept_states()
-        self.alphabet = self.gen_alphabet()
-        self.alpha_to_idx = {sym: i for i, sym in enumerate(self.base_alphabet)}
+        # PDF spec: alphabet is Σ×Σ, indexed 0-15 for 4-letter base alphabet
+        # Symbol i represents pair (a1, a2) where:
+        # a1 = i // 4, a2 = i % 4 (both 0-3)
+        self.alphabet_size = len(self.base_alphabet) * len(self.base_alphabet)
+
+        # For AA-split problem: start state is (start, start)
+        # Both components start from the base DFA start state
+        self.product_start_state = self.encode_state_pair(start_state, start_state)
+
+        # Lazy state generation - no upfront state generation
+        # States are created on-demand through delta transitions
+        self.forward_trans_cache = {}  # Cache for forward transitions
+        self.backward_trans_cache = {}  # Cache for backward transitions
 
 
 
@@ -41,185 +48,144 @@ class ProductDFA:
     Input:
         self - the product dfa itself
     Output:
-        The alphabet the product dfa uses in list form
+        The alphabet size (Σ×Σ, so 16 for 4-letter base alphabet)
     Example:
         Call - productDFA.get_alphabet()
-        Output - the alphabet of productDFA (a, b, c, d)
+        Output - 16
     Preconditions:
         alphabet must be initialized
     """
     def get_alphabet(self):
-        return self.alphabet
+        return self.alphabet_size
 
 
 
     """
     Input:
         self - the product dfa itself
+        encoded_state - an encoded ProductDFA state
     Output:
-        The states in the product dfa
+        True if this is an accepting state
     Example:
-        Call - productDFA.get_states()
-        Output - a list of states in productDFA
+        Call - productDFA.is_accept_state(encoded_state)
+        Output - True if first component = first_final_state and second is accepting
     Preconditions:
         None
     """
-    def get_states(self):
-        return self.states
+    def is_accept_state(self, encoded_state):
+        # For AA-split: accepting if BOTH components are in accepting states
+        s1, s2 = self.decode_state_pair(encoded_state)
+        return s1 in self.base_accept_states and s2 in self.base_accept_states
 
 
 
     """
     Input:
         self - the product dfa itself
+        s1 - first component (base DFA state value: 0, 1, 2, ..., 1365)
+        s2 - second component (base DFA state value: 0, 1, 2, ..., 1365)
     Output:
-        The accept states in the product dfa
+        Sequential index from 0 to num_base_states² - 1
     Example:
-        Call - productDFA.get_accept_states()
-        Output - a list of accepting states in productDFA
+        Call - productDFA.encode_state_pair(0, 0) with 1366 base states
+        Output - 0 (0 * 1366 + 0 = 0)
+        Call - productDFA.encode_state_pair(1, 0)
+        Output - 1366 (1 * 1366 + 0 = 1366)
     Preconditions:
-        None
-    """
-    def get_accept_states(self):
-        return self.accept_states
-
-
-
-    """
-    Input:
-        self - the product dfa itself
-    Output:
-        accept_states - set of accepting states for the product dfa
-    Example:
-        Call - productDFA.generate_accept_states()
-        Result - productDFA now has a set of accepting states
-    Preconditions:
-        self must have states, base_accept_states, and first_final_states
-    """
-    def generate_accept_states(self):
-        # Valid accepting states are states where the
-        # second element of the couplet match the target state
-        # and both are accepting states of the base DFA
-        accept_states = set()
-        for s2 in self.base_accept_states:
-            encoded_state = self.encode_state_pair(self.first_final_state, s2)
-            if encoded_state in self.states:
-                accept_states.add(encoded_state)
-        return accept_states
-
-
-
-    """
-    Input:
-        self - the product dfa itself
-        s1 - first component of the state pair
-        s2 - second component of the state pair
-    Output:
-        encoded state as a single integer using formula: s1 * max_base_state + s2
-    Example:
-        Call - productDFA.encode_state_pair(5, 3) with max_base_state=1365
-        Output - 6828 (5 * 1365 + 3)
-    Preconditions:
-        max_base_state must be set
+        s1 and s2 must be valid base DFA states (0-1365)
     """
     def encode_state_pair(self, s1, s2):
-        return s1 * self.max_base_state + s2
+        # Since base DFA states are sequential (0, 1, 2, ..., 1365),
+        # we can directly use them as indices
+        # Sequential encoding: s1 * num_base_states + s2
+        return s1 * self.num_base_states + s2
 
     """
     Input:
         self - the product dfa itself
-        encoded_state - the encoded state as a single integer
+        encoded_state - sequential index (0 to num_base_states² - 1)
     Output:
-        tuple (s1, s2) representing the state pair
+        tuple (s1, s2) representing base DFA state values (both 0-1365)
     Example:
-        Call - productDFA.decode_state_pair(6828) with max_base_state=1365
-        Output - (5, 3)
+        Call - productDFA.decode_state_pair(0)
+        Output - (0, 0)
+        Call - productDFA.decode_state_pair(1366)
+        Output - (1, 0)
     Preconditions:
-        max_base_state must be set
+        encoded_state must be valid sequential index
     """
     def decode_state_pair(self, encoded_state):
-        s1 = encoded_state // self.max_base_state
-        s2 = encoded_state % self.max_base_state
+        # Decode to base DFA state values (which are sequential 0-1365)
+        s1 = encoded_state // self.num_base_states
+        s2 = encoded_state % self.num_base_states
         return (s1, s2)
 
     """
     Input:
         self - the product dfa itself
-        states - the states that will be made into pairs for the product dfa
+        encoded_state - the current encoded state (single integer)
     Output:
-        a sorted list of encoded state pairs (as single integers)
+        list of (symbol_idx, next_encoded_state) pairs for all valid transitions
     Example:
-        Call - productDFA.generate_states()
-        Result - productDFA now has a sorted list of encoded state pairs
-    Preconditions:
-        failed_state is defined, max_base_state must be set
-    """
-    def generate_states(self, states):
-        state_pairs = []
-        for s1 in states:
-            if s1 != failed_state:
-                for s2 in states:
-                    if s2 != failed_state:
-                        encoded = self.encode_state_pair(s1, s2)
-                        state_pairs.append(encoded)
-        return sorted(state_pairs)
-
-
-
-    """
-    Input:
-        self - the product dfa itself
-    Output:
-        a list of pairs of letters in 'alphabet'
-    Example:
-        Call - productDFA.gen_alphabet()
-        Result - productDFA now has a sorted list of alphabet symbol pairs
-    Preconditions:
-        alphabet must be defined
-    """
-    def gen_alphabet(self):
-        alpha = []
-        for x1 in self.base_dfa.get_alphabet():
-            for x2 in self.base_dfa.get_alphabet():
-                alpha.append((x1, x2))
-        return alpha
-
-
-
-    """
-    Input:
-        self - the product dfa itself
-        encoded_state - the encoded product state (s1 * max_base_state + s2)
-        sym1 - the first input symbol in a pair
-        sym2 - the second input symbol in a pair
-    Output:
-        the state and symbols encoded to a single int for caching
-    Example:
-        Call - productDFA.encode_key_to_int(encoded_state, sym1, sym2)
-        Output - the inputs encoded into one int
+        Call - productDFA.get_forward_transitions(0)
+        Output - [(0, 1366), (1, 2732), (2, 4098), (3, 5464)]
     Preconditions:
         None
     """
-    def encode_key_to_int(self, encoded_state, sym1, sym2):
-        # Use bit shifting: encoded_state | (sym1_idx << some_bits) | sym2_idx
-        return (encoded_state << 8) | (self.alpha_to_idx[sym1] << 4) | self.alpha_to_idx[sym2]
+    def get_forward_transitions(self, encoded_state):
+        if encoded_state in self.forward_trans_cache:
+            return self.forward_trans_cache[encoded_state]
+
+        transitions = []
+        # Iterate over all symbols in Σ×Σ (0-15 for 4-letter alphabet)
+        for sym_idx in range(self.alphabet_size):
+            next_state = self.delta(encoded_state, sym_idx)
+            if next_state != failed_state:
+                transitions.append((sym_idx, next_state))
+
+        self.forward_trans_cache[encoded_state] = transitions
+        return transitions
 
 
 
     """
     Input:
         self - the product dfa itself
-        alpha - a set of a pair of symbols from the alphabet
+        encoded_state - the current encoded state
     Output:
-        the pair of symbols printed in form (alpha[0], alpha[1])
+        list of encoded states that can reach encoded_state in one transition
     Example:
-        Call - productDFA.pretty_print_alpha({0, 1}) 
-        Output - (0, 1)
+        Call - productDFA.get_backward_transitions(1366)
+        Output - [0]  # Only state (0,0) can reach state (1,1) via 'a'
     Preconditions:
-        alpha must contain elements at indexes 0 and 1
+        Must call get_forward_transitions first to build the reverse map
     """
-    def pretty_print_alpha(self, alpha):
-        return f"({alpha[0]},{alpha[1]})"
+    def get_backward_transitions(self, encoded_state):
+        if encoded_state in self.backward_trans_cache:
+            return self.backward_trans_cache[encoded_state]
+        # This will be built lazily as forward transitions are discovered
+        return []
+
+
+
+    """
+    Input:
+        self - the product dfa itself
+        from_state - the encoded state transitioning from
+        to_state - the encoded state transitioning to
+    Output:
+        None (updates internal backward transition cache)
+    Example:
+        Call - productDFA.register_backward_transition(0, 1366)
+        Result - backward_trans_cache[1366] will include 0
+    Preconditions:
+        None
+    """
+    def register_backward_transition(self, from_state, to_state):
+        if to_state not in self.backward_trans_cache:
+            self.backward_trans_cache[to_state] = []
+        if from_state not in self.backward_trans_cache[to_state]:
+            self.backward_trans_cache[to_state].append(from_state)
 
 
 
@@ -238,3 +204,69 @@ class ProductDFA:
     def pretty_print_state(self, state):
         s1, s2 = self.decode_state_pair(state)
         return f"({self.base_dfa.pretty_print_state(s1)} : {self.base_dfa.pretty_print_state(s2)})"
+
+
+
+    """
+    Input:
+        self - the product dfa itself
+        state - the current encoded state (single integer)
+        symbol_idx - the index of the symbol in Σ×Σ alphabet (0-15)
+    Output:
+        the new encoded state after transition, or failed_state if invalid
+    Example:
+        Call - productDFA.delta(encoded_state, 0)  # transition on (a,a) = symbol 0
+        Output - new encoded state after (q1,q2) -> (δ(q1,a), δ(q2,a))
+    Preconditions:
+        state must be a valid encoded state
+        symbol_idx must be in range [0, alphabet_size-1]
+    """
+    def delta(self, state, symbol_idx):
+        if symbol_idx < 0 or symbol_idx >= self.alphabet_size:
+            return failed_state
+
+        # Decode symbol_idx to get (a1, a2) pair
+        # For 4-letter alphabet: symbol_idx = a1*4 + a2
+        a1 = symbol_idx // len(self.base_alphabet)
+        a2 = symbol_idx % len(self.base_alphabet)
+
+        # Get the actual symbols from base alphabet
+        symbol1 = self.base_alphabet[a1]
+        symbol2 = self.base_alphabet[a2]
+
+        # Decode product state to (s1, s2)
+        s1, s2 = self.decode_state_pair(state)
+
+        # Transition: δ1((s1,s2), (a1,a2)) = (δ(s1,a1), δ(s2,a2))
+        next_s1 = self.base_dfa.transition(s1, symbol1)
+        next_s2 = self.base_dfa.transition(s2, symbol2)
+
+        if next_s1 == failed_state or next_s2 == failed_state:
+            return failed_state
+
+        next_state = self.encode_state_pair(next_s1, next_s2)
+
+        # Register backward transition for lazy reverse map building
+        self.register_backward_transition(state, next_state)
+
+        return next_state
+
+
+
+    """
+    Input:
+        self - the product dfa itself
+    Output:
+        generator yielding all encoded accepting states
+    Example:
+        Call - list(productDFA.get_accept_states())
+        Output - [encoded states where both components are accepting]
+    Preconditions:
+        None
+    """
+    def get_accept_states(self):
+        # For AA-split problem: BOTH components must be at accepting states
+        # This represents that both left_half and right_half satisfy the DFA
+        for s1 in self.base_accept_states:
+            for s2 in self.base_accept_states:
+                yield self.encode_state_pair(s1, s2)

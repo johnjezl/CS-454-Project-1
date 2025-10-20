@@ -125,9 +125,7 @@ class DFA:
         failed_state is defined
     """
     def transition(self, state, input_symbol):
-        if (state, input_symbol) in self.transition_table:
-            return self.transition_table[(state, input_symbol)]
-        return failed_state
+        return self.transition_table[state][self.alphabet.index(input_symbol)]
 
 
 
@@ -165,16 +163,13 @@ class DFA:
         Need the delta function from class Delta, need buildStates() to build all the states, alphabet is defined
     """
     def build_transition_table(self):
-        table = {}
-
-        # Generate all states
-        states, accepting_states = build_states()
+        table = [[-1 for _ in range(len(self.alphabet))] for _ in range(len(self.states))]
 
         # Build transition table using the delta passed to __init__
-        for state in states:
-            for symbol in self.alphabet:
+        for state_idx, state in enumerate(self.states):
+            for sym_idx, symbol in enumerate(self.alphabet):
                 next_state = self.delta.delta(state, symbol)
-                table[(state, symbol)] = next_state
+                table[state_idx][sym_idx] = next_state
 
         return table
 
@@ -195,27 +190,22 @@ class DFA:
         alphabet is defined
     """
     def pretty_print_state(self, state):
-        state_string = ""
         if state == -1:
             return "failed_state"
         if state == 0:
             return "start"
 
-        depth = 0
+        # Decode using (symbol + 1) encoding
+        state_string = ""
         remaining = state
         while remaining > 0:
-            # Extract the symbol value
-            symbol_value = remaining % 4
-            if symbol_value == 0:
-                symbol_value = 4
+            digit = remaining % 4
+            if digit == 0:  # d (index 3) is encoded as 4, which is 0 mod 4
+                state_string = self.alphabet[3] + state_string
                 remaining = (remaining // 4) - 1
             else:
+                state_string = self.alphabet[digit - 1] + state_string
                 remaining = remaining // 4
-
-            # Convert contribution to letter (1->a, 2->b, 3->c, 4->d)
-            letter_idx = symbol_value - 1
-            state_string = state_string + self.alphabet[letter_idx]
-            depth += 1
 
         return state_string
 

@@ -2,6 +2,29 @@ from Delta import Delta
 from build_states import failed_state
 
 
+class DFAWrapper:
+    """
+    Wrapper around DFA that provides a delta function with symbol indices.
+    """
+    def __init__(self, dfa):
+        self.dfa = dfa
+        self.alphabet = dfa.get_alphabet()
+        self.symbol_to_idx = {sym: i for i, sym in enumerate(self.alphabet)}
+
+    def delta(self, state, symbol_idx):
+        """
+        Input:
+            state - the current state number
+            symbol_idx - the index of the symbol in the alphabet (0-3)
+        Output:
+            the new state after transition, or failed_state if invalid
+        """
+        if symbol_idx < 0 or symbol_idx >= len(self.alphabet):
+            return failed_state
+        symbol = self.alphabet[symbol_idx]
+        return self.dfa.transition(state, symbol)
+
+
 """
 Input:
     dfa - the dfa that accepts pairs of strings having all letters of alphabet in each substring of length 6
@@ -16,58 +39,47 @@ Preconditions:
     dfa must contain all states and accepting states and delta function
 """
 def countValidStrings(dfa, n):
-    states = dfa.get_states()
-    alphabet = dfa.get_alphabet()
+    states = list(dfa.get_states())
     num_states = len(states)
-    num_symbols = len(alphabet)
 
-    # Create state-to-index mapping
-    max_state = max(s for s in states if s != failed_state)
-    state_to_index = [-1] * (max_state + 1)
-
-    for idx, state in enumerate(states):
-        if state != failed_state:
-            state_to_index[state] = idx
-
-    # Build transition matrix as list of lists
-    # transitions[from_idx][symbol_idx] = to_idx (-1 for failed)
-    transitions = [[-1] * num_symbols for _ in range(num_states)]
-
-    for from_idx, from_state in enumerate(states):
-        if from_state == failed_state:
-            continue
-
-        for sym_idx, symbol in enumerate(alphabet):
-            next_state = dfa.transition(from_state, symbol)
-            if next_state != failed_state and next_state < len(state_to_index):
-                next_idx = state_to_index[next_state]
-                if next_idx != -1:
-                    transitions[from_idx][sym_idx] = next_idx
-
-    # Initialize with accepting states
-    accept_set = set(dfa.get_accept_states())
+    # Forward DP: start from the start state
+    # prev[i] = number of ways to reach states[i] in the current number of steps
     prev = [0] * num_states
-    for idx, state in enumerate(states):
-        if state in accept_set:
-            prev[idx] = 1
+    prev[dfa.start_state] = 1  # One way to be at start with 0 steps
 
+    # For each step from 1 to n
     for _ in range(n):
         next_counts = [0] * num_states
 
+        # For each state, compute how many ways to reach other states in one more step
         for from_idx in range(num_states):
-            if states[from_idx] == failed_state:
+            from_state = states[from_idx]
+
+            # Skip if no ways to reach this state
+            if prev[from_idx] == 0:
                 continue
 
-            for sym_idx in range(num_symbols):
-                to_idx = transitions[from_idx][sym_idx]
-                if to_idx != -1:
-                    next_counts[from_idx] += prev[to_idx]
+            # Skip failed state
+            if from_state == failed_state:
+                continue
+
+            # Try all symbols
+            for symbol in dfa.get_alphabet():
+                next_state = dfa.transition(from_state, symbol)
+
+                # Add paths through this transition
+                if next_state != failed_state:
+                    next_counts[next_state] += prev[from_idx]
 
         prev = next_counts
 
-    # Return count from start state
-    start_idx = state_to_index[dfa.start_state]
-    return int(prev[start_idx])
+    # Sum up counts at all accepting states
+    total = 0
+    for idx in range(num_states):
+        if states[idx] in dfa.get_accept_states():
+            total += prev[idx]
+
+    return int(total)
 
 
 
@@ -86,6 +98,8 @@ Preconditions:
     dfa must contain all states and accepting states and have a transition function
 """
 def countAASplitStrings(dfa, n):
+    from ProductDFA import ProductDFA
+
     if n % 2 != 0:
         return 0
 
@@ -93,71 +107,31 @@ def countAASplitStrings(dfa, n):
     if half_len < 0:
         return 0
 
-    states = dfa.get_states()
-    alphabet = dfa.get_alphabet()
-    num_states = len(states)
+    # Create ProductDFA with lazy state generation
+    # Both components start at start_state (0), first_final_state is unused now
+    prod_dfa = ProductDFA(dfa, dfa.start_state, dfa.start_state)
 
-    # Build state index mapping
-    max_state = max(s for s in states if s != failed_state)
-    state_to_index = [-1] * (max_state + 1)
-    for idx, state in enumerate(states):
-        if state != failed_state:
-            state_to_index[state] = idx
+    # Start state: both DFAs at start (0, 0)
+    start_encoded = prod_dfa.encode_state_pair(0, 0)
 
-    # Build forward and backward transition 
-    forward_trans = [[] for _ in range(num_states)]
-    backward_trans = [[] for _ in range(num_states)]
-
-    for from_idx, from_state in enumerate(states):
-        if from_state == failed_state:
-            continue
-        for symbol in alphabet:
-            next_state = dfa.transition(from_state, symbol)
-            if next_state != failed_state and next_state < len(state_to_index):
-                next_idx = state_to_index[next_state]
-                if next_idx != -1:
-                    forward_trans[from_idx].append(next_idx)
-                    backward_trans[next_idx].append(from_idx)
-
-    left_counts = {}
-    left_counts[state_to_index[0]] = 1
+    # Forward DP using ProductDFA
+    # Track how many ways to reach each ProductDFA state from start
+    # After half_len steps, both components will have processed their respective halves
+    counts = {start_encoded: 1}
 
     for _ in range(half_len):
-        next_left = {}
-        for from_idx, count in left_counts.items():
-            for to_idx in forward_trans[from_idx]:
-                next_left[to_idx] = next_left.get(to_idx, 0) + count
-        left_counts = next_left
+        next_counts = {}
+        for state, count in counts.items():
+            # Get all forward transitions (cached internally)
+            for _, next_state in prod_dfa.get_forward_transitions(state):
+                next_counts[next_state] = next_counts.get(next_state, 0) + count
+        counts = next_counts
 
-    accept_set = set(dfa.get_accept_states())
-    right_counts = {}
-
-    for idx, state in enumerate(states):
-        if state in accept_set:
-            right_counts[idx] = 1
-
-    for _ in range(half_len):
-        next_right = {}
-        for to_idx, count in right_counts.items():
-            for from_idx in backward_trans[to_idx]:
-                next_right[from_idx] = next_right.get(from_idx, 0) + count
-        right_counts = next_right
-
-    # Combine... for each state p with left paths, check "aa" transition to q
+    # Count paths that end at accepting states
+    # Accepting means both left_half and right_half are accepted by the base DFA
     total = 0
-    for p_idx, left_count in left_counts.items():
-        p_state = states[p_idx]
-
-        p_a = dfa.transition(p_state, 'a')
-        if p_a == failed_state:
-            continue
-
-        q = dfa.transition(p_a, 'a')
-        if q == failed_state:
-            continue
-
-        q_idx = state_to_index[q]
-        if q_idx in right_counts:
-            total += left_count * right_counts[q_idx]
+    for state, count in counts.items():
+        if prod_dfa.is_accept_state(state):
+            total += count
 
     return int(total)
