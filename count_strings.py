@@ -75,21 +75,17 @@ Preconditions:
 """
 def countAASplitStrings(dfa, n):
     """
-    Count strings in L' using 3-phase forward DP.
+    Count strings in L' using 3-phase forward dynamic programming (DP).
 
     L' = {w | w is in L, |w| is even and the middle two characters are "aa"}
 
-    PDF spec relationship: This algorithm is mathematically equivalent to building
-    ProductDFA Mp for each p ∈ Q and summing L(M0) ∪ L(M1) ∪ ⋯, but uses a more
-    efficient implementation that avoids building 1365 separate ProductDFAs.
-
     The 3-phase approach:
     1. Forward DP through left_half: count ways to reach each state p
-    2. Transition on "aa": from each state p, compute q = δ(p, "aa")
+    2. Transition on "aa": from each state p, compute q = delta(p, "aa")
     3. Forward DP through right_half: count ways to reach accepting states from q
 
-    This implicitly sums over all possible values of p (as required by PDF),
-    weighted by the number of paths that reach each p in the left half.
+    This sums over all possible values of p, weighted by the number of paths that 
+    reach each p in the left half.
     """
     if n % 2 != 0:
         return 0

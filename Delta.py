@@ -5,7 +5,7 @@ class Delta:
 
     """
     Input:
-        state - the state to start from (base-4 encoding representing a string of characters)
+        state - the state to start from 
         input - the character to transition on
     Output:
         new_state - the new state a state of less than 5 chars will be in after transitioning on input
@@ -112,7 +112,7 @@ class Delta:
     Output:
         true if is valid transition (if adding input to state results in all characters in alphabet), false if not
     Example:
-        Input - _is_valid_transition(1364, 'a')     (where 1364 = 'ddddd')
+        Input - _is_valid_transition(1365, 'a')
         Output - false (adding 'a' to 'ddddd' gives 'ddddda', last 6 chars don't have all alphabet letters)
     Preconditions:
         state must represent a string of at least 5 chars, input must be a letter that exists in alphabet

@@ -9,8 +9,8 @@ Output:
     states - list of all possible states, including the failed state
     accepting_states - list of all possible accepting states
 Example:
-    input - buildStates(5, 0) with alphabet of 4 chars
-    output - list of 1365 states (plus failed_state) and list of 1365 accepting states
+    input - buildStates(5) with alphabet of 4 chars
+    output - list of 1366 states (includes failed_state) and list of 1365 accepting states
 Preconditions:
     buildStatesHelper and failed_state must be defined, letters_to_add must be a positive int
 """
@@ -25,7 +25,7 @@ def build_states(max_length = 5):
 
 
 def generate_state_numbers(current, max_length, states):
-    """Recursively generate all combinations up to max_length"""
+    # Recursively generate all combinations up to max_length
     if len(current) > 0:
         states.append(len(states))
 
