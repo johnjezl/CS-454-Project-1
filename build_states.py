@@ -9,7 +9,7 @@ Output:
     accepting_states - list of all possible accepting states
 Example:
     input - buildStates(5)
-    output - list of 1366 states (inclunding failed_state) and list of 1365 accepting states
+    output - list of 1366 states (including failed_state) and list of 1365 accepting states
 Preconditions:
     failed_state must be defined
 """
@@ -36,6 +36,7 @@ Example:
     result - All combinations of states up to length 5 have been generated and stores in 'states'
 Preconditions:
     max_length >= 1
+    current starts as ""
 """
 def generate_state_numbers(current, max_length, states):
     # Recursively generate all combinations up to max_length
