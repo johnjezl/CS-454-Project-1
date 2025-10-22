@@ -1,3 +1,22 @@
+"""
+## Project 1
+
+### Contributions
+
+#### Angelica: 
+Did most of the menu and function documentation for input, output, examples, and preconditions.
+Helped with debugging the DFAs and checking that project met specifications.
+
+#### John:
+Angelica and I pair programmed the initial approach to the DFAs and counting algorithms.  
+I refactored once we had the correct state encoding specs and performed performance testing and
+subsequent modifications.  As mentioned below, I did lean on CC with the initial performance 
+optimizations due to the complexity introduced by our incorrect state encoding (that should have 
+been my first hint that we had the wrong enconding).
+
+### Disclosures/Transparency:
+We used Claude Code AI when trying to optimize the performance.
+"""
 from Delta import Delta
 from DFA import *
 from build_states import build_states
